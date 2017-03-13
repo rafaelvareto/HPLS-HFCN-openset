@@ -5,7 +5,8 @@ from auxiliar import generate_pos_neg_dict
 from auxiliar import load_txt_file
 from descriptor import Descriptor
 from pls_classifier import PLSClassifier
-#from vggface import VGGFace
+
+# from vggface import VGGFace
 
 NUM_DIM = 128
 NUM_hashing = 100
@@ -22,7 +23,7 @@ def main():
     scores_y = []
     splits = []
 
-    #vgg_model = VGGFace()
+    # vgg_model = VGGFace()
 
     print('>> LOADING GALLERY')
     gallery_list = load_txt_file(PATH + GAL)
@@ -33,7 +34,7 @@ def main():
         gallery_path = PATH + sample_path
         gallery_image = cv.imread(gallery_path, cv.IMREAD_COLOR)
         gallery_image = cv.resize(gallery_image, (NUM_DIM, NUM_DIM))
-        #feature_vector = Descriptor.get_deep_feature(gallery_image, vgg_model, layer_name='fc6')
+        # feature_vector = Descriptor.get_deep_feature(gallery_image, vgg_model, layer_name='fc6')
         feature_vector = Descriptor.get_hog(gallery_image)
 
         matrix_x.append(feature_vector)
@@ -52,7 +53,7 @@ def main():
         classifier = PLSClassifier()
         boolean_label = [split[key] for key in matrix_y]
         model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
-        models.append((model,split))
+        models.append((model, split))
         counter += 1
         print(counter)
 
@@ -70,8 +71,8 @@ def main():
 
         response = []
         for model in models:
-            # ans = model[0].predict(feature_vector).tolist()
-            response.append(model[0].predict(feature_vector).tolist()[0])
+            # ans = model[0].predict(feature_vector).tolist()[0]
+            response.append(model[0].predict_conf(feature_vector).tolist()[0])
         print('Done')
 
 

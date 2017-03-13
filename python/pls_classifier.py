@@ -61,7 +61,7 @@ class PLSClassifier(BaseEstimator, ClassifierMixin):
 
         return self
 
-    def predict(self, x):
+    def predict_value(self, x):
         resp = self.decision_function(x)
         if resp.ndim == 1:
             ans = np.zeros(resp.shape, dtype=np.int32)
@@ -71,6 +71,9 @@ class PLSClassifier(BaseEstimator, ClassifierMixin):
             ans = self.classes_[np.argmax(resp, axis=1)]
 
         return ans
+
+    def predict_conf(self, x):
+        return self.decision_function(x)
 
     def decision_function(self, x):
         proj = self.pls.transform(x)
