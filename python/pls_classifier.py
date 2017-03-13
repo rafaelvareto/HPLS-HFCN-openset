@@ -25,7 +25,7 @@ def _to_categorical(y, nb_classes=None):
 class PLSClassifier(BaseEstimator, ClassifierMixin):
     __name__ = 'MultiLayeredPLS'
 
-    def __init__(self, estimator=None, n_iter=1500, eps=1e-6, n_comp=2, mode='regression'):
+    def __init__(self, estimator=None, n_iter=1500, eps=1e-6, n_comp=10, mode='regression'):
         self.n_iter = n_iter
         self.eps = eps
         self.n_comp = n_comp
