@@ -219,4 +219,4 @@ class Descriptor:
 
         intermediate_layer = Model(input=vgg_model.input, output=vgg_model.get_layer(layer_name).output)
         intermediate_output = intermediate_layer.predict(image)
-        return intermediate_output
+        return intermediate_output[0]
