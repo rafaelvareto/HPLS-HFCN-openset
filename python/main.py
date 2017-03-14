@@ -12,15 +12,14 @@ NUM_DIM = 128
 NUM_hashing = 100
 
 PATH = '/home/vareto/Downloads/Databases-feature-frgc1/frgcv1/'
-GAL = 'train_1_label(copy).txt'
-PRO = 'test_1_label(copy).txt'
+GAL = 'train_1_label.txt'
+PRO = 'test_1_label.txt'
 
 
 def main():
     matrix_x = []
     matrix_y = []
     models = []
-    scores_y = []
     splits = []
 
     # vgg_model = VGGFace()
@@ -39,15 +38,14 @@ def main():
 
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
-        scores_y.append(0)
-        scores_y.append(0)
 
-    print('>> SPLITTING POSITIVE_NEGATIVE SETS')
+    print('>> SPLITTING POSITIVE/NEGATIVE SETS')
     individuals = list(set(matrix_y))
+    cmc_score = np.zeros(len(individuals))
     for index in range(0, NUM_hashing):
         splits.append(generate_pos_neg_dict(individuals))
 
-    print('>> PLS CLASSIFICATION: LEARNING MODELS')
+    print('>> LEARNING PLS MODELS:')
     counter = 0
     for split in splits:
         classifier = PLSClassifier()
@@ -55,7 +53,8 @@ def main():
         model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
         models.append((model, split))
         counter += 1
-        print(counter)
+        print counter,
+    print(' ')
 
     print('>> LOADING PROBE')
     counter = 0
@@ -69,11 +68,25 @@ def main():
         query_image = cv.resize(query_image, (NUM_DIM, NUM_DIM))
         feature_vector = Descriptor.get_hog(query_image)
 
-        response = []
+        vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
-            # ans = model[0].predict(feature_vector).tolist()[0]
-            response.append(model[0].predict_conf(feature_vector).tolist()[0])
-        print('Done')
+            pos_list = [key for key, value in model[1].iteritems() if value == 1]
+            response = model[0].predict_confidence(feature_vector)
+            for pos in pos_list:
+                vote_dict[pos] += response
+        result = vote_dict.items()
+        result.sort(key=lambda tup: tup[1], reverse=True)
+
+        for outer in range(len(individuals)):
+            for inner in range(outer + 1):
+                if result[inner][0] == sample_name:
+                    cmc_score[outer] += 1
+                    break
+        print(counter, sample_name, result[0])
+        counter += 1
+
+    cmc_score = np.divide(cmc_score, counter)
+    print(cmc_score)
 
 
 if __name__ == "__main__":

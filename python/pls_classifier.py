@@ -72,10 +72,12 @@ class PLSClassifier(BaseEstimator, ClassifierMixin):
 
         return ans
 
-    def predict_conf(self, x):
-        return self.decision_function(x)
+    def predict_confidence(self, x):
+        resp = self.decision_function(x)
+        return resp[0]
 
     def decision_function(self, x):
+        x = np.array(x).reshape((1, -1))
         proj = self.pls.transform(x)
         resp = self.estimator_.predict(proj)
         return resp
