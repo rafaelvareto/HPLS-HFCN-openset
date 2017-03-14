@@ -6,7 +6,7 @@ from auxiliar import load_txt_file
 from descriptor import Descriptor
 from pls_classifier import PLSClassifier
 
-# from vggface import VGGFace
+from vggface import VGGFace
 
 NUM_DIM = 128
 NUM_hashing = 100
@@ -22,7 +22,7 @@ def main():
     models = []
     splits = []
 
-    # vgg_model = VGGFace()
+    vgg_model = VGGFace()
 
     print('>> LOADING GALLERY')
     gallery_list = load_txt_file(PATH + GAL)
@@ -33,8 +33,7 @@ def main():
         gallery_path = PATH + sample_path
         gallery_image = cv.imread(gallery_path, cv.IMREAD_COLOR)
         gallery_image = cv.resize(gallery_image, (NUM_DIM, NUM_DIM))
-        # feature_vector = Descriptor.get_deep_feature(gallery_image, vgg_model, layer_name='fc6')
-        feature_vector = Descriptor.get_hog(gallery_image)
+        feature_vector = Descriptor.get_deep_feature(gallery_image, vgg_model, layer_name='fc6')
 
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
@@ -66,7 +65,7 @@ def main():
         query_path = PATH + sample_path
         query_image = cv.imread(query_path, cv.IMREAD_COLOR)
         query_image = cv.resize(query_image, (NUM_DIM, NUM_DIM))
-        feature_vector = Descriptor.get_hog(query_image)
+        feature_vector = Descriptor.get_deep_feature(query_image, vgg_model)
 
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
@@ -82,7 +81,10 @@ def main():
                 if result[inner][0] == sample_name:
                     cmc_score[outer] += 1
                     break
-        print(counter, sample_name, result[0])
+        #print(counter, sample_name, result[0])
+        printable = vote_dict.values()
+        printable.sort(reverse=True)
+        print(printable)
         counter += 1
 
     cmc_score = np.divide(cmc_score, counter)

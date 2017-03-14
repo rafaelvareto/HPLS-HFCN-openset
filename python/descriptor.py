@@ -10,6 +10,7 @@ from keras.models import Model
 
 from auxiliar import sliding_window
 
+
 def bilinear_interpolation(x, y, img):
     r = x
     c = y
@@ -126,8 +127,8 @@ class Descriptor:
                 lbp_img.itemset((x, y), res)
 
         print lbp_img
-        crop_img = lbp_img[R:lbp_img.shape[0]-R, R:lbp_img.shape[1]-R]
-        for (row, col, window) in sliding_window(crop_img, window_size=(W,W), step_size=S):
+        crop_img = lbp_img[R:lbp_img.shape[0] - R, R:lbp_img.shape[1] - R]
+        for (row, col, window) in sliding_window(crop_img, window_size=(W, W), step_size=S):
             window_hist, bins = np.histogram(window.flatten(), 256, [0, 256])
             hist.append(window_hist)
         return hist
@@ -183,7 +184,7 @@ class Descriptor:
                     pixel_values.add(res)
                 else:
                     unassigned.append((x, y))
-            # print x
+                    # print x
 
         unassigned_value = len(pixel_values)
         pixel_values = sorted(pixel_values)
