@@ -6,8 +6,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import misc
 
-from keras.models import Model
-
 from auxiliar import sliding_window
 
 
@@ -206,6 +204,8 @@ class Descriptor:
 
     @classmethod
     def get_deep_feature(self, image, vgg_model, layer_name='fc6'):
+        from keras.models import Model
+
         im = misc.imresize(image, (224, 224)).astype(np.float32)
         aux = copy.copy(im)
         im[:, :, 0] = aux[:, :, 2]
