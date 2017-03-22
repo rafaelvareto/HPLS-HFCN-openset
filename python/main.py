@@ -1,4 +1,5 @@
 import cv2 as cv
+import matplotlib.pyplot as plt
 import numpy as np
 
 from auxiliar import generate_pos_neg_dict
@@ -12,9 +13,9 @@ from pls_classifier import PLSClassifier
 NUM_DIM = 128
 NUM_hashing = 100
 
-PATH = '/home/vareto/Downloads/Databases-feature-frgc1/frgcv1/'
-GAL = 'train_4_label.txt'
-PRO = 'test_4_label.txt'
+PATH = '/Users/Vareto/Downloads/Databases-feature-frgc1/frgcv1/'
+GAL = 'train_1_label.txt'
+PRO = 'test_1_label.txt'
 
 
 def main():
@@ -86,7 +87,10 @@ def main():
                 if result[inner][0] == sample_name:
                     cmc_score[outer] += 1
                     break
-        print(counter, sample_name, result[0])
+        values = vote_dict.values()
+        print(counter, sample_name, result[0], np.mean(values))
+        plt.bar(range(len(individuals)), values)
+        plt.savefig('res/closedset_' + str(counter) + '_' + sample_name + '_' + result[0][0])
         counter += 1
 
         # Getting Precision-Recall relevant information
