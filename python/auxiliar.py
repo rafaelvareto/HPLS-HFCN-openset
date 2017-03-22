@@ -3,8 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from itertools import cycle
-from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import roc_curve
 
 
 def load_images(path, image_list, display=False):
@@ -43,7 +45,7 @@ def generate_pos_neg_dict(labels):
     return full_dict
 
 
-def generate_precision_recall(individuals, y_label_list, y_score_list):
+def generate_precision_recall(individuals, y_label_list, y_score_list, extra_name):
     # Prepare input data
     individuals.sort()
     label_list = []
@@ -81,25 +83,42 @@ def generate_precision_recall(individuals, y_label_list, y_score_list):
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
-    plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall example: AUC={0:0.2f}'.format(average_precision[0]))
+    plt.xlim([0.0, 1.0])precision_recall
+    plt.title('Precision-Recall: AUC={0:0.2f}'.format(average_precision[0]))
     plt.legend(loc="lower left")
+    plt.savefig('plots/' + extra_name + '_precision_recall')
     plt.show()
 
     # Plot Precision-Recall curve for each class
-    plt.clf()
-    plt.plot(recall["micro"], precision["micro"], color='gold', lw=lw,
-             label='micro-average Precision-recall curve (area = {0:0.2f})'
-                   ''.format(average_precision["micro"]))
-    for i, color in zip(range(n_classes), colors):
-        plt.plot(recall[i], precision[i], color=color, lw=lw,
-                 label='Precision-recall curve of class {0} (area = {1:0.2f})'
-                       ''.format(individuals[i], average_precision[i]))
+    # plt.clf()
+    # plt.plot(recall["micro"], precision["micro"], color='gold', lw=lw,
+    #          label='micro-average Precision-recall curve (area = {0:0.2f})'
+    #                ''.format(average_precision["micro"]))
+    # for i, color in zip(range(n_classes), colors):
+    #     plt.plot(recall[i], precision[i], color=color, lw=lw,
+    #              label='Precision-recall curve of class {0} (area = {1:0.2f})'
+    #                    ''.format(individuals[i], average_precision[i]))
 
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.title('Extension of Precision-Recall curve to multi-class')
-    plt.legend(loc="lower left")
-    plt.show()
+    # plt.xlim([0.0, 1.0])
+    # plt.ylim([0.0, 1.05])
+    # plt.xlabel('Recall')
+    # plt.ylabel('Precision')
+    # plt.title('Extension of Precision-Recall curve to multi-class')
+    # plt.legend(loc="lower left")
+    # plt.show()
+
+
+def generate_roc(individuals, y_label_list, y_score_list, extra_name):
+    # Prepare input data
+    individuals.sort()
+    label_list = []
+    score_list = []
+    n_classes = len(individuals)
+    for line in y_label_list:
+        temp_list = [item[1] for item in line]
+        label_list.append(temp_list)
+    for line in y_score_list:
+        temp_list = [item[1] for item in line]
+        score_list.append(temp_list)
+    label_array = np.array(label_list)
+    score_array = np.array(score_list)

@@ -11,11 +11,12 @@ from pls_classifier import PLSClassifier
 # from vggface import VGGFace
 
 NUM_DIM = 128
-NUM_hashing = 100
+NUM_HASH = 100
 
-PATH = '/Users/Vareto/Downloads/Databases-feature-frgc1/frgcv1/'
-GAL = 'train_1_label.txt'
-PRO = 'test_1_label.txt'
+SETNAME = 'closedset'
+PATH = './frgcv1/'
+GAL = 'train_1_label_' + SETNAME + '.txt'
+PRO = 'test_1_label_' + SETNAME + '.txt'
 
 
 def main():
@@ -44,7 +45,7 @@ def main():
     print('>> SPLITTING POSITIVE/NEGATIVE SETS')
     individuals = list(set(matrix_y))
     cmc_score = np.zeros(len(individuals))
-    for index in range(0, NUM_hashing):
+    for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))
 
     print('>> LEARNING PLS MODELS:')
@@ -89,8 +90,12 @@ def main():
                     break
         values = vote_dict.values()
         print(counter, sample_name, result[0], np.mean(values))
+        plt.clf()
         plt.bar(range(len(individuals)), values)
-        plt.savefig('res/closedset_' + str(counter) + '_' + sample_name + '_' + result[0][0])
+        if sample_name == result[0][0]:
+            plt.savefig('plots/' + SETNAME + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0])
+        else:
+            plt.savefig('plots/' + SETNAME + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0] + '_ERROR')
         counter += 1
 
         # Getting Precision-Recall relevant information
@@ -104,7 +109,7 @@ def main():
 
     cmc_score = np.divide(cmc_score, counter)
     print(cmc_score)
-    generate_precision_recall(individuals, pc_labels, pc_scores)
+    generate_precision_recall(individuals, pc_labels, pc_scores, SETNAME + '_' + str(NUM_HASH))
 
 
 if __name__ == "__main__":
