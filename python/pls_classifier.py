@@ -1,5 +1,6 @@
 import numpy as np
 import sklearn
+import warnings
 
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
@@ -26,6 +27,8 @@ class PLSClassifier(BaseEstimator, ClassifierMixin):
     __name__ = 'MultiLayeredPLS'
 
     def __init__(self, estimator=None, n_iter=1500, eps=1e-6, n_comp=10, mode='regression'):
+        warnings.filterwarnings(action="ignore", module="scipy", message="^internal gelsd")
+
         self.n_iter = n_iter
         self.eps = eps
         self.n_comp = n_comp

@@ -1,7 +1,11 @@
 # CUSTOM
 *.*~
+*.jpg
+*.jpeg
+*.png
 *.txt
 /data/
+/results/
 
 
 # C++ FILES
