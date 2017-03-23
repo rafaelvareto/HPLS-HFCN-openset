@@ -45,6 +45,19 @@ def generate_pos_neg_dict(labels):
     return full_dict
 
 
+def generate_probe_histogram(individuals, values, extra_name):
+    plt.clf()
+    plt.bar(range(len(individuals)), values)
+    if sample_name == result[0][0]:
+        plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0])
+    else:
+        plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0] + '_ERROR')
+
+"""
+A system with high recall but low precision returns many results, but most of its predicted labels are incorrect when compared to the training labels. 
+A system with high precision but low recall is just the opposite, returning very few results, but most of its predicted labels are correct when compared to the training labels. 
+An ideal system with high precision and high recall will return many results, with all results labeled correctly.
+"""
 def generate_precision_recall(individuals, y_label_list, y_score_list, extra_name):
     # Prepare input data
     individuals.sort()
@@ -78,37 +91,22 @@ def generate_precision_recall(individuals, y_label_list, y_score_list, extra_nam
 
     # Plot Precision-Recall curve
     plt.clf()
-    plt.plot(recall[0], precision[0], lw=lw, color='navy',
-             label='Precision-Recall curve')
+    plt.plot(recall["micro"], precision["micro"], lw=lw, color='gold', label='Precision-Recall curve')
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
-    plt.xlim([0.0, 1.0])precision_recall
-    plt.title('Precision-Recall: AUC={0:0.2f}'.format(average_precision[0]))
+    plt.xlim([0.0, 1.0])
+    plt.title('Precision-Recall: AUC={0:0.2f}'.format(average_precision["micro"]))
     plt.legend(loc="lower left")
     plt.savefig('plots/' + extra_name + '_precision_recall')
-    plt.show()
+    #plt.show()
 
-    # Plot Precision-Recall curve for each class
-    # plt.clf()
-    # plt.plot(recall["micro"], precision["micro"], color='gold', lw=lw,
-    #          label='micro-average Precision-recall curve (area = {0:0.2f})'
-    #                ''.format(average_precision["micro"]))
-    # for i, color in zip(range(n_classes), colors):
-    #     plt.plot(recall[i], precision[i], color=color, lw=lw,
-    #              label='Precision-recall curve of class {0} (area = {1:0.2f})'
-    #                    ''.format(individuals[i], average_precision[i]))
-
-    # plt.xlim([0.0, 1.0])
-    # plt.ylim([0.0, 1.05])
-    # plt.xlabel('Recall')
-    # plt.ylabel('Precision')
-    # plt.title('Extension of Precision-Recall curve to multi-class')
-    # plt.legend(loc="lower left")
-    # plt.show()
-
-
-def generate_roc(individuals, y_label_list, y_score_list, extra_name):
+"""
+ROC curves typically feature true positive rate on the Y axis, and false positive rate on the X axis. 
+This means that the top left corner of the plot is the ideal point - a false positive rate of zero, and a true positive rate of one. 
+This is not very realistic, but it does mean that a larger area under the curve (AUC) is usually better.
+"""
+def generate_roc_curve(individuals, y_label_list, y_score_list, extra_name):
     # Prepare input data
     individuals.sort()
     label_list = []
@@ -122,3 +120,32 @@ def generate_roc(individuals, y_label_list, y_score_list, extra_name):
         score_list.append(temp_list)
     label_array = np.array(label_list)
     score_array = np.array(score_list)
+
+    # Setup plot details
+    colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
+    lw = 2
+
+    # Compute ROC curve and ROC area for each class
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(label_array[:, i], score_array[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # Compute micro-average ROC curve and ROC area
+    fpr["micro"], tpr["micro"], _ = roc_curve(label_array.ravel(), score_array.ravel())
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+
+    # Plot Receiver Operating Characteristic curve
+    plt.clf()
+    plt.plot(fpr["micro"], tpr["micro"], color='darkorange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc["micro"])
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic')
+    plt.legend(loc="lower right")
+    plt.savefig('plots/' + extra_name + '_roc_curve')
+    #plt.show()
