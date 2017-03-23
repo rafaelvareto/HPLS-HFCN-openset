@@ -29,6 +29,17 @@ def load_txt_file(file_name):
     return this_list
 
 
+def augment_gallery_set(image_sample):
+    image_samples = []
+    image_samples.append(image_sample)
+    image_samples.append(cv.flip(image_sample, 1)) # vertical-axis flip
+    rows,cols,dep = image_sample.shape
+    for angle in range(-5,6,10):
+        rot_matrix = cv.getRotationMatrix2D((rows/2, cols/2), angle, 1.1)
+        image_samples.append(cv.warpAffine(image_sample, rot_matrix,(cols, rows)))
+    return image_samples
+
+
 def sliding_window(image, window_size, step_size):
     for y in xrange(0, image.shape[0], step_size):
         for x in xrange(0, image.shape[1], step_size):
@@ -99,7 +110,7 @@ def generate_precision_recall(individuals, y_label_list, y_score_list, extra_nam
     plt.title('Precision-Recall: AUC={0:0.2f}'.format(average_precision["micro"]))
     plt.legend(loc="lower left")
     plt.savefig('plots/' + extra_name + '_precision_recall')
-    #plt.show()
+    # plt.show()
 
 """
 ROC curves typically feature true positive rate on the Y axis, and false positive rate on the X axis. 
@@ -148,4 +159,4 @@ def generate_roc_curve(individuals, y_label_list, y_score_list, extra_name):
     plt.title('Receiver Operating Characteristic')
     plt.legend(loc="lower right")
     plt.savefig('plots/' + extra_name + '_roc_curve')
-    #plt.show()
+    # plt.show()
