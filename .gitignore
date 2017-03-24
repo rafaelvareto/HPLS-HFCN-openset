@@ -3,8 +3,8 @@
 *.jpg
 *.jpeg
 *.png
-*.txt
 /data/
+/python/frgc/frgc-part/partitions-orig/*.txt
 /results/
 
 

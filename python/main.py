@@ -15,10 +15,10 @@ IMG_WIDTH = 128
 IMG_HEIGHT = 144
 NUM_HASH = 100
 
-SETNAME = '_openset'
+SETNAME = 'openset'
 PATH = './frgcv1/'
-GAL = 'train_1_label' + SETNAME + '.txt'
-PRO = 'test_1_label' + SETNAME + '.txt'
+GAL = 'train_1_label_' + SETNAME + '.txt'
+PRO = 'test_1_label_' + SETNAME + '.txt'
 
 
 def main():
