@@ -19,17 +19,37 @@ def load_txt_file(file_name):
     return this_list
 
 
-def split_known_unknown_sets(complete_tuple_list, set_size=0.5):
+def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
     label_set = set()
     for (path, label) in complete_tuple_list:
         label_set.add(label)
 
-    known_set = set(random.sample(label_set, int(set_size * len(label_set))))
+    known_set = set(random.sample(label_set, int(known_set_size * len(label_set))))
     unknown_set = label_set - known_set
     
     known_tuple = [(path, label) for (path, label) in complete_tuple_list if label in known_set]
     unknown_tuple = [(path, label) for (path, label) in complete_tuple_list if label in unknown_set]
+    
     return known_tuple, unknown_tuple
+
+
+def split_train_test_sets(complete_tuple_list, train_set_size=0.5):
+    from sklearn.model_selection import train_test_split
+    
+    labels = []
+    paths = []
+    random_state = np.random.RandomState(0)
+    for (path, label) in complete_tuple_list:
+        labels.append(label)
+        paths.append(label)
+
+    random_gen = np.random.RandomState(0)
+    path_train, path_test, label_train, label_test = train_test_split(paths, labels, train_size=train_set_size, random_state=random_gen)
+
+    train_set = zip(path_train, label_train)
+    test_set = zip(path_test, label_test)
+
+    return train_set, test_set
 
 
 def load_images(path, image_list, display=False):
