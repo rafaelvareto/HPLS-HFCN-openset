@@ -9,16 +9,6 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
 
 
-def load_images(path, image_list, display=False):
-    for name in image_list:
-        image = cv.imread(path + '/' + name, cv.IMREAD_COLOR)
-        if display:
-            cv.imshow('img', image)
-            cv.waitKey(20)
-    if display:
-        cv.destroyAllWindows()
-
-
 def load_txt_file(file_name):
     this_file = open(file_name, 'r')
     this_list = []
@@ -27,6 +17,29 @@ def load_txt_file(file_name):
         components = line.split()
         this_list.append(components)
     return this_list
+
+
+def split_known_unknown_sets(complete_tuple_list, set_size=0.5):
+    label_set = set()
+    for (path, label) in complete_tuple_list:
+        label_set.add(label)
+
+    known_set = set(random.sample(label_set, int(set_size * len(label_set))))
+    unknown_set = label_set - known_set
+    
+    known_tuple = [(path, label) for (path, label) in complete_tuple_list if label in known_set]
+    unknown_tuple = [(path, label) for (path, label) in complete_tuple_list if label in unknown_set]
+    return known_tuple, unknown_tuple
+
+
+def load_images(path, image_list, display=False):
+    for name in image_list:
+        image = cv.imread(path + '/' + name, cv.IMREAD_COLOR)
+        if display:
+            cv.imshow('img', image)
+            cv.waitKey(20)
+    if display:
+        cv.destroyAllWindows()
 
 
 def augment_gallery_set(image_sample):
