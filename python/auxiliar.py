@@ -36,14 +36,14 @@ def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
 
 def split_train_test_sets(complete_tuple_list, train_set_size=0.5):
     from sklearn.model_selection import train_test_split
-    
     labels = []
     paths = []
+    
     random_state = np.random.RandomState(0)
     for (path, label) in complete_tuple_list:
         labels.append(label)
-        paths.append(label)
-
+        paths.append(path)
+    
     random_gen = np.random.RandomState(0)
     path_train, path_test, label_train, label_test = train_test_split(paths, labels, train_size=train_set_size, random_state=random_gen)
 
