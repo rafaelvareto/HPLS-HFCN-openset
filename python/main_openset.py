@@ -100,12 +100,6 @@ def main():
         plotting_labels.append((sample_name, 1))
         plotting_scores.append((sample_name, output))
 
-        print(plotting_label)
-        print(plotting_score)
-        raw_input('Press any key')
-
-
-
     print('>> LOADING UNKNOWN PROBE: {0} samples'.format(len(unknown_tuples)))
     counter = 0
     for probe_sample in unknown_tuples:
@@ -129,18 +123,14 @@ def main():
         counter += 1
         denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
         if denominator > 0:
-            print(counter, sample_name, result[0][0], result[0][1] / denominator)
+            output = result[0][1] / denominator
         else:
-            print(counter, sample_name, result[0][0], result[0][1])
+            output = result[0][1]
+        print(counter, sample_name, result[0][0], output)
 
         # Getting closed set plotting relevant information
-        plotting_label_dict = {key: 0 for (key, value) in vote_dict.iteritems()}
-        plotting_label = plotting_label_dict.items() 
-        plotting_label.sort(key=lambda tup: tup[0])
-        plotting_labels.append(plotting_label)
-        plotting_score = vote_dict.items()
-        plotting_score.sort(key=lambda tup: tup[0])
-        plotting_scores.append(plotting_score)
+        plotting_labels.append((sample_name, -1))
+        plotting_scores.append((sample_name, output))
 
 
 if __name__ == "__main__":
