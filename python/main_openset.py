@@ -19,7 +19,7 @@ IMG_HEIGHT = 144
 NUM_HASH = 100
 
 
-SETNAME = 'set_2'
+SETNAME = 'set_4'
 DATASET = SETNAME + '_label.txt'
 PATH = './frgcv1/'
 
@@ -101,7 +101,7 @@ def main():
             output = result[0][1]
         print(counterA, sample_name, result[0][0], output)
 
-        # Getting closed set plotting relevant information
+        # Getting known set plotting relevant information
         plotting_labels.append([(sample_name, 1)])
         plotting_scores.append([(sample_name, output)])
 
@@ -133,7 +133,7 @@ def main():
             output = result[0][1]
         print(counterB, sample_name, result[0][0], output)
 
-        # Getting closed set plotting relevant information
+        # Getting unknown set plotting relevant information
         plotting_labels.append([(sample_name, -1)])
         plotting_scores.append([(sample_name, output)])
 

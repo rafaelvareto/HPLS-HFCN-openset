@@ -113,7 +113,7 @@ def generate_cmc_curve(cmc_scores, extra_name):
     plt.clf()
     plt.plot(x_axis, y_axis, color='blue', linestyle='-')
     plt.xlim([0, len(cmc_scores)])
-    plt.ylim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
     plt.xlabel('Rank')
     plt.ylabel('Accuracy Rate')
     plt.title('Cumulative Matching Characteristic')
@@ -155,7 +155,7 @@ def generate_precision_recall(n_classes, y_label_list, y_score_list, extra_name)
     # Compute micro-average ROC curve and ROC area
     precision["micro"], recall["micro"], thresh["micro"] = precision_recall_curve(label_array.ravel(), score_array.ravel())
     average_precision["micro"] = average_precision_score(label_array, score_array, average="micro")
-    print('Precision-Recall', thresh["micro"])
+    print('Precision-Recall Thresholds', thresh["micro"])
 
     # Plot Precision-Recall curve
     plt.clf()
@@ -203,7 +203,7 @@ def generate_roc_curve(n_classes, y_label_list, y_score_list, extra_name):
     # Compute micro-average ROC curve and ROC area
     fpr["micro"], tpr["micro"],  thresh["micro"] = roc_curve(label_array.ravel(), score_array.ravel())
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
-    print('ROC Curve', thresh["micro"])
+    print('ROC Curve Thresholds', thresh["micro"])
 
     # Plot Receiver Operating Characteristic curve
     plt.clf()
