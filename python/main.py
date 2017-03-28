@@ -111,7 +111,6 @@ def main():
     generate_precision_recall(len(individuals), pc_labels, pc_scores, SETNAME + '_' + str(NUM_HASH))
     generate_roc_curve(len(individuals), pc_labels, pc_scores, SETNAME + '_' + str(NUM_HASH))
     cmc_score = np.divide(cmc_score, counter)
-    print(cmc_score)
 
 
 if __name__ == "__main__":

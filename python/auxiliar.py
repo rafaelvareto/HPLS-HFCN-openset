@@ -98,6 +98,29 @@ def generate_probe_histogram(individuals, values, extra_name):
     else:
         plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0] + '_ERROR')
 
+
+"""
+The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
+It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
+Templates are compared and ranked based on their similarity.
+"""
+def generate_cmc_curve(cmc_scores, extra_name):
+    x_axis = range(len(cmc_scores))
+    y_axis = cmc_scores
+    print('CMC Curve', cmc_scores)
+
+    # Plot Cumulative Matching Characteristic curve
+    plt.clf()
+    plt.plot(x_axis, y_axis, color='blue', linestyle='-')
+    plt.xlim([0, len(cmc_scores)])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel('Rank')
+    plt.ylabel('Accuracy Rate')
+    plt.title('Cumulative Matching Characteristic')
+    plt.savefig('plots/cmc_curve_' + extra_name)
+    # plt.show()
+
+
 """
 A system with high recall but low precision returns many results, but most of its predicted labels are incorrect when compared to the training labels. 
 A system with high precision but low recall is just the opposite, returning very few results, but most of its predicted labels are correct when compared to the training labels. 
@@ -121,16 +144,18 @@ def generate_precision_recall(n_classes, y_label_list, y_score_list, extra_name)
     lw = 2
 
     # Compute Precision-Recall and plot curve
+    average_precision = dict()
     precision = dict()
     recall = dict()
-    average_precision = dict()
+    thresh = dict()
     for i in range(n_classes):
-        precision[i], recall[i], _ = precision_recall_curve(label_array[:, i], score_array[:, i])
+        precision[i], recall[i], thresh[i] = precision_recall_curve(label_array[:, i], score_array[:, i])
         average_precision[i] = average_precision_score(label_array[:, i], score_array[:, i])
 
     # Compute micro-average ROC curve and ROC area
-    precision["micro"], recall["micro"], _ = precision_recall_curve(label_array.ravel(), score_array.ravel())
+    precision["micro"], recall["micro"], thresh["micro"] = precision_recall_curve(label_array.ravel(), score_array.ravel())
     average_precision["micro"] = average_precision_score(label_array, score_array, average="micro")
+    print('Precision-Recall', thresh["micro"])
 
     # Plot Precision-Recall curve
     plt.clf()
@@ -142,7 +167,7 @@ def generate_precision_recall(n_classes, y_label_list, y_score_list, extra_name)
     plt.title('Precision-Recall: AUC={0:0.2f}'.format(average_precision["micro"]))
     plt.legend(loc="lower left")
     plt.savefig('plots/precision_recall_' + extra_name)
-    # plt.show()
+
 
 """
 ROC curves typically feature true positive rate on the Y axis, and false positive rate on the X axis. 
@@ -168,15 +193,17 @@ def generate_roc_curve(n_classes, y_label_list, y_score_list, extra_name):
 
     # Compute ROC curve and ROC area for each class
     fpr = dict()
-    tpr = dict()
+    tpr = dict()    
     roc_auc = dict()
+    thresh = dict()
     for i in range(n_classes):
-        fpr[i], tpr[i], _ = roc_curve(label_array[:, i], score_array[:, i])
+        fpr[i], tpr[i], thresh[i] = roc_curve(label_array[:, i], score_array[:, i])
         roc_auc[i] = auc(fpr[i], tpr[i])
 
     # Compute micro-average ROC curve and ROC area
-    fpr["micro"], tpr["micro"], _ = roc_curve(label_array.ravel(), score_array.ravel())
+    fpr["micro"], tpr["micro"],  thresh["micro"] = roc_curve(label_array.ravel(), score_array.ravel())
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+    print('ROC Curve', thresh["micro"])
 
     # Plot Receiver Operating Characteristic curve
     plt.clf()
@@ -189,19 +216,3 @@ def generate_roc_curve(n_classes, y_label_list, y_score_list, extra_name):
     plt.title('Receiver Operating Characteristic')
     plt.legend(loc="lower right")
     plt.savefig('plots/roc_curve_' + extra_name)
-    # plt.show()
-
-
-def generate_cmc_curve(cmc_scores, extra_name):
-    x_axis = range(len(cmc_scores))
-    y_axis = cmc_scores
-
-    plt.clf()
-    plt.plot(x_axis, y_axis, color='blue', linestyle='-')
-    plt.xlim([0, len(cmc_scores)])
-    plt.ylim([0.0, 1.0])
-    plt.xlabel('Rank')
-    plt.ylabel('Accuracy Rate')
-    plt.title('Cumulative Matching Characteristic')
-    plt.savefig('plots/cmc_curve_' + extra_name)
-    # plt.show()

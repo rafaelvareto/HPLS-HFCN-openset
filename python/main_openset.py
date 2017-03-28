@@ -16,11 +16,12 @@ from pls_classifier import PLSClassifier
 
 IMG_WIDTH = 128
 IMG_HEIGHT = 144
-NUM_HASH = 10
+NUM_HASH = 100
 
-DATASET = 'train_2_label.txt'
+
+SETNAME = 'set_2'
+DATASET = SETNAME + '_label.txt'
 PATH = './frgcv1/'
-SETNAME = 'train_2'
 
 
 def main():
@@ -136,11 +137,11 @@ def main():
         plotting_labels.append([(sample_name, -1)])
         plotting_scores.append([(sample_name, output)])
 
-    cmc_score = np.divide(cmc_score, counterA)
+    cmc_score_norm = np.divide(cmc_score, counterA)
+    generate_cmc_curve(cmc_score_norm, SETNAME + '_' + str(NUM_HASH))
     generate_precision_recall(1, plotting_labels, plotting_scores, SETNAME + '_' + str(NUM_HASH))
     generate_roc_curve(1, plotting_labels, plotting_scores, SETNAME + '_' + str(NUM_HASH))
-    generate_cmc_curve(cmc_score, SETNAME + '_' + str(NUM_HASH))
-    print(cmc_score)
+    
 
 
 if __name__ == "__main__":
