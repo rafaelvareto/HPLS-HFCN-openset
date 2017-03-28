@@ -17,8 +17,8 @@ NUM_HASH = 100
 
 SETNAME = 'openset'
 PATH = './frgcv1/'
-GAL = 'train_1_label_' + SETNAME + '.txt'
-PRO = 'test_1_label_' + SETNAME + '.txt'
+GAL = 'train_1_label.txt'
+PRO = 'test_1_label.txt'
 
 
 def main():
@@ -58,8 +58,7 @@ def main():
         model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
         models.append((model, split))
         counter += 1
-        print counter,
-    print(' ')
+        print(counter)
 
     print('>> LOADING PROBE')
     counter = 0
@@ -109,8 +108,8 @@ def main():
         pc_score.sort(key=lambda tup: tup[0])
         pc_scores.append(pc_score)
 
-    generate_precision_recall(individuals, pc_labels, pc_scores, SETNAME + '_' + str(NUM_HASH))
-    generate_roc_curve(individuals, pc_labels, pc_scores, SETNAME + '_' + str(NUM_HASH))
+    generate_precision_recall(len(individuals), pc_labels, pc_scores, SETNAME + '_' + str(NUM_HASH))
+    generate_roc_curve(len(individuals), pc_labels, pc_scores, SETNAME + '_' + str(NUM_HASH))
     cmc_score = np.divide(cmc_score, counter)
     print(cmc_score)
 

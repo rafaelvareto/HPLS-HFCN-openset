@@ -103,12 +103,10 @@ A system with high recall but low precision returns many results, but most of it
 A system with high precision but low recall is just the opposite, returning very few results, but most of its predicted labels are correct when compared to the training labels. 
 An ideal system with high precision and high recall will return many results, with all results labeled correctly.
 """
-def generate_precision_recall(individuals, y_label_list, y_score_list, extra_name):
+def generate_precision_recall(n_classes, y_label_list, y_score_list, extra_name):
     # Prepare input data
-    individuals.sort()
     label_list = []
     score_list = []
-    n_classes = len(individuals)
     for line in y_label_list:
         temp_list = [item[1] for item in line]
         label_list.append(temp_list)
@@ -143,7 +141,7 @@ def generate_precision_recall(individuals, y_label_list, y_score_list, extra_nam
     plt.xlim([0.0, 1.0])
     plt.title('Precision-Recall: AUC={0:0.2f}'.format(average_precision["micro"]))
     plt.legend(loc="lower left")
-    plt.savefig('plots/' + extra_name + '_precision_recall')
+    plt.savefig('plots/precision_recall_' + extra_name)
     # plt.show()
 
 """
@@ -151,12 +149,10 @@ ROC curves typically feature true positive rate on the Y axis, and false positiv
 This means that the top left corner of the plot is the ideal point - a false positive rate of zero, and a true positive rate of one. 
 This is not very realistic, but it does mean that a larger area under the curve (AUC) is usually better.
 """
-def generate_roc_curve(individuals, y_label_list, y_score_list, extra_name):
+def generate_roc_curve(n_classes, y_label_list, y_score_list, extra_name):
     # Prepare input data
-    individuals.sort()
     label_list = []
     score_list = []
-    n_classes = len(individuals)
     for line in y_label_list:
         temp_list = [item[1] for item in line]
         label_list.append(temp_list)
@@ -192,5 +188,20 @@ def generate_roc_curve(individuals, y_label_list, y_score_list, extra_name):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristic')
     plt.legend(loc="lower right")
-    plt.savefig('plots/' + extra_name + '_roc_curve')
+    plt.savefig('plots/roc_curve_' + extra_name)
+    # plt.show()
+
+
+def generate_cmc_curve(cmc_scores, extra_name):
+    x_axis = range(len(cmc_scores))
+    y_axis = cmc_scores
+
+    plt.clf()
+    plt.plot(x_axis, y_axis, color='blue', linestyle='-')
+    plt.xlim([0, len(cmc_scores)])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel('Rank')
+    plt.ylabel('Accuracy Rate')
+    plt.title('Cumulative Matching Characteristic')
+    plt.savefig('plots/cmc_curve_' + extra_name)
     # plt.show()

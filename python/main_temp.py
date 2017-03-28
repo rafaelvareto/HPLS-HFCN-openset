@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import random
 
@@ -38,13 +39,29 @@ def split_train_test_sets(complete_tuple_list, train_set_size=0.5):
 
     return train_set, test_set
 
+def generate_cmc_curve(cmc_scores):
+    x_axis = range(len(cmc_scores))
+    y_axis = cmc_scores
+
+    plt.clf()
+    plt.plot(x_axis, y_axis, color='blue', linestyle='-')
+    plt.xlim([0, len(cmc_scores)])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel('Rank')
+    plt.ylabel('Accuracy Rate')
+    plt.title('Cumulative Matching Characteristic')
+    # plt.show()
+
 
 def main():
-    set_list = load_txt_file(PATH + SETNAME)
-    knownT, unknownT = split_known_unknown_sets(set_list)
-    gallery, probe = split_train_test_sets(knownT)
+    # set_list = load_txt_file(PATH + SETNAME)
+    # knownT, unknownT = split_known_unknown_sets(set_list)
+    # gallery, probe = split_train_test_sets(knownT)
 
-    print(len(gallery), len(probe))
+    # print(len(gallery), len(probe))
+
+    cmc_score = [0.1, 0.2, 0.32, 0.45, 0.58, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.87, 0.9, 0.92, 0.94, 0.96, 0.98, 1.0]
+    generate_cmc_curve(cmc_score)
 
 if __name__ == "__main__":
     main()
