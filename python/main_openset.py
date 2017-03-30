@@ -11,6 +11,7 @@ from auxiliar import split_known_unknown_sets
 from auxiliar import split_train_test_sets
 
 from descriptor import Descriptor
+from vggface import VGGFace
 from pls_classifier import PLSClassifier
 
 
@@ -32,6 +33,8 @@ def main():
 
     plotting_labels = []
     plotting_scores = []
+
+    vgg_model = VGGFace()
     
     print('>> EXPLORING DATASET')
     dataset_list = load_txt_file(PATH + DATASET)
@@ -45,8 +48,9 @@ def main():
         
         gallery_path = PATH + sample_path
         gallery_image = cv.imread(gallery_path, cv.IMREAD_COLOR)
-        gallery_image = cv.resize(gallery_image, (IMG_HEIGHT, IMG_WIDTH))
-        feature_vector = Descriptor.get_hog(gallery_image)
+        # gallery_image = cv.resize(gallery_image, (IMG_HEIGHT, IMG_WIDTH))
+        # feature_vector = Descriptor.get_hog(gallery_image)
+        feature_vector = Descriptor.get_deep_feature(gallery_image, vgg_model, layer_name='fc6')
     
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
@@ -113,8 +117,9 @@ def main():
 
         query_path = PATH + sample_path 
         query_image = cv.imread(query_path, cv.IMREAD_COLOR)
-        query_image = cv.resize(query_image, (IMG_HEIGHT, IMG_WIDTH))
-        feature_vector = Descriptor.get_hog(query_image)
+        # query_image = cv.resize(query_image, (IMG_HEIGHT, IMG_WIDTH))
+        # feature_vector = Descriptor.get_hog(query_image)
+        feature_vector = Descriptor.get_deep_feature(query_image, vgg_model)
 
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
