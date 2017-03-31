@@ -79,8 +79,9 @@ def main():
 
         query_path = PATH + sample_path
         query_image = cv.imread(query_path, cv.IMREAD_COLOR)
-        query_image = cv.resize(query_image, (IMG_HEIGHT, IMG_WIDTH))
-        feature_vector = Descriptor.get_hog(query_image)
+        # query_image = cv.resize(query_image, (IMG_HEIGHT, IMG_WIDTH))
+        # feature_vector = Descriptor.get_hog(query_image)
+        feature_vector = Descriptor.get_deep_feature(query_image, vgg_model)
 
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
