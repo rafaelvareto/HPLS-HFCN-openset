@@ -1,31 +1,53 @@
 import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse
 
 from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
-from auxiliar import generate_precision_recall
-from auxiliar import generate_roc_curve
+from auxiliar import generate_precision_recall, plot_precision_recall
+from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import load_txt_file
-from auxiliar import split_known_unknown_sets
-from auxiliar import split_train_test_sets
+from auxiliar import split_known_unknown_sets, split_train_test_sets
 
 from descriptor import Descriptor
 from vggface import VGGFace
 from pls_classifier import PLSClassifier
 
-
-IMG_WIDTH = 128
-IMG_HEIGHT = 144
-NUM_HASH = 100
-
-
-SETNAME = 'set_4'
-DATASET = SETNAME + '_label.txt'
-PATH = './frgcv1/'
+parser = argparse.ArgumentParser(description='PLSH for Face Recognition')
+parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./frgcv1/')
+parser.add_argument('-f', '--file', help='Input file name', required=False, default='set_4_label.txt')
+parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
+parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
+parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
+parser.add_argument('-iw', '--width', help='Default image width', required=False, default=128)
+parser.add_argument('-ih', '--height', help='Default image height', required=False, default=144)
+args = parser.parse_args()
 
 
 def main():
+    PATH = str(args.path)
+    DATASET = str(args.file)
+    DESCRIPTOR = str(args.desc)
+    NUM_HASH = int(args.hash)
+    OUTPUT_NAME = DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR
+
+    rocs = []
+    for index in range(int(args.rept)):
+        print('EXECUTION #%s' % str(index+1))
+        roc = plshface(args)
+        rocs.append(roc)
+    plot_roc_curve(rocs, OUTPUT_NAME)
+
+        
+def plshface(args):
+    PATH = str(args.path)
+    DATASET = str(args.file)
+    DESCRIPTOR = str(args.desc)
+    NUM_HASH = int(args.hash)
+    IMG_WIDTH = int(args.width)
+    IMG_HEIGHT = int(args.height)
+
     matrix_x = []
     matrix_y = []
     models = []
@@ -34,7 +56,9 @@ def main():
     plotting_labels = []
     plotting_scores = []
 
-    vgg_model = VGGFace()
+    vgg_model = None
+    if DESCRIPTOR == 'df':
+        vgg_model = VGGFace()
     
     print('>> EXPLORING DATASET')
     dataset_list = load_txt_file(PATH + DATASET)
@@ -48,9 +72,12 @@ def main():
         
         gallery_path = PATH + sample_path
         gallery_image = cv.imread(gallery_path, cv.IMREAD_COLOR)
-        # gallery_image = cv.resize(gallery_image, (IMG_HEIGHT, IMG_WIDTH))
-        # feature_vector = Descriptor.get_hog(gallery_image)
-        feature_vector = Descriptor.get_deep_feature(gallery_image, vgg_model, layer_name='fc6')
+        
+        if DESCRIPTOR == 'hog':
+            gallery_image = cv.resize(gallery_image, (IMG_HEIGHT, IMG_WIDTH))
+            feature_vector = Descriptor.get_hog(gallery_image)
+        elif DESCRIPTOR == 'df':
+            feature_vector = Descriptor.get_deep_feature(gallery_image, vgg_model, layer_name='fc6')
     
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
@@ -79,9 +106,11 @@ def main():
 
         query_path = PATH + sample_path
         query_image = cv.imread(query_path, cv.IMREAD_COLOR)
-        # query_image = cv.resize(query_image, (IMG_HEIGHT, IMG_WIDTH))
-        # feature_vector = Descriptor.get_hog(query_image)
-        feature_vector = Descriptor.get_deep_feature(query_image, vgg_model)
+        if DESCRIPTOR == 'hog':
+            query_image = cv.resize(query_image, (IMG_HEIGHT, IMG_WIDTH))
+            feature_vector = Descriptor.get_hog(query_image)
+        elif DESCRIPTOR == 'df':
+            feature_vector = Descriptor.get_deep_feature(query_image, vgg_model)
 
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
@@ -118,9 +147,11 @@ def main():
 
         query_path = PATH + sample_path 
         query_image = cv.imread(query_path, cv.IMREAD_COLOR)
-        # query_image = cv.resize(query_image, (IMG_HEIGHT, IMG_WIDTH))
-        # feature_vector = Descriptor.get_hog(query_image)
-        feature_vector = Descriptor.get_deep_feature(query_image, vgg_model)
+        if DESCRIPTOR == 'hog':
+            query_image = cv.resize(query_image, (IMG_HEIGHT, IMG_WIDTH))
+            feature_vector = Descriptor.get_hog(query_image)
+        elif DESCRIPTOR == 'df':    
+            feature_vector = Descriptor.get_deep_feature(query_image, vgg_model)
 
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
@@ -143,12 +174,13 @@ def main():
         plotting_labels.append([(sample_name, -1)])
         plotting_scores.append([(sample_name, output)])
 
-    cmc_score_norm = np.divide(cmc_score, counterA)
-    generate_cmc_curve(cmc_score_norm, SETNAME + '_' + str(NUM_HASH))
-    generate_precision_recall(1, plotting_labels, plotting_scores, SETNAME + '_' + str(NUM_HASH))
-    generate_roc_curve(1, plotting_labels, plotting_scores, SETNAME + '_' + str(NUM_HASH))
+    # cmc_score_norm = np.divide(cmc_score, counterA)
+    # generate_cmc_curve(cmc_score_norm, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)
+    # generate_precision_recall(1, plotting_labels, plotting_scores, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)
     
-
+    roc = dict()
+    roc['fpr'], roc['tpr'], roc['thresh'], roc['auc'] = generate_roc_curve(1, plotting_labels, plotting_scores)
+    return roc
 
 if __name__ == "__main__":
     main()

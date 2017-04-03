@@ -139,32 +139,37 @@ def generate_precision_recall(n_classes, y_label_list, y_score_list, extra_name)
     label_array = np.array(label_list)
     score_array = np.array(score_list)
 
-    # Setup plot details
-    colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
-    lw = 2
-
-    # Compute Precision-Recall and plot curve
     average_precision = dict()
     precision = dict()
     recall = dict()
     thresh = dict()
-    for i in range(n_classes):
-        precision[i], recall[i], thresh[i] = precision_recall_curve(label_array[:, i], score_array[:, i])
-        average_precision[i] = average_precision_score(label_array[:, i], score_array[:, i])
+
+    # Compute Precision-Recall and plot curve
+    # for i in range(n_classes):
+    #     precision[i], recall[i], thresh[i] = precision_recall_curve(label_array[:, i], score_array[:, i])
+    #     average_precision[i] = average_precision_score(label_array[:, i], score_array[:, i])
 
     # Compute micro-average ROC curve and ROC area
     precision["micro"], recall["micro"], thresh["micro"] = precision_recall_curve(label_array.ravel(), score_array.ravel())
     average_precision["micro"] = average_precision_score(label_array, score_array, average="micro")
-    print('Precision-Recall Thresholds', thresh["micro"])
+
+    return precision["micro"], recall["micro"], thresh["micro"], average_precision["micro"]
+
+
+def plot_precision_recall(precisions, recalls, threshs, averages):
+    # Setup plot details
+    colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
+    lw = 2
 
     # Plot Precision-Recall curve
     plt.clf()
-    plt.plot(recall["micro"], precision["micro"], lw=lw, color='gold', label='Precision-Recall curve')
+    for index, color in zip(range(len(precisions)), colors):
+        plt.plot(recall[index], precision[index], lw=lw, color='gold', label='Precision-Recall curve')
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall: AUC={0:0.2f}'.format(average_precision["micro"]))
+    plt.title('Precision-Recall: AUC={0:0.2f}'.format(average_precision[index]))
     plt.legend(loc="lower left")
     plt.savefig('plots/precision_recall_' + extra_name)
 
@@ -174,7 +179,7 @@ ROC curves typically feature true positive rate on the Y axis, and false positiv
 This means that the top left corner of the plot is the ideal point - a false positive rate of zero, and a true positive rate of one. 
 This is not very realistic, but it does mean that a larger area under the curve (AUC) is usually better.
 """
-def generate_roc_curve(n_classes, y_label_list, y_score_list, extra_name):
+def generate_roc_curve(n_classes, y_label_list, y_score_list):
     # Prepare input data
     label_list = []
     score_list = []
@@ -187,27 +192,33 @@ def generate_roc_curve(n_classes, y_label_list, y_score_list, extra_name):
     label_array = np.array(label_list)
     score_array = np.array(score_list)
 
-    # Setup plot details
-    colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
-    lw = 2
-
-    # Compute ROC curve and ROC area for each class
     fpr = dict()
     tpr = dict()    
     roc_auc = dict()
     thresh = dict()
-    for i in range(n_classes):
-        fpr[i], tpr[i], thresh[i] = roc_curve(label_array[:, i], score_array[:, i])
-        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # Compute ROC curve and ROC area for each class
+    # for i in range(n_classes):
+    #     fpr[i], tpr[i], thresh[i] = roc_curve(label_array[:, i], score_array[:, i])
+    #     roc_auc[i] = auc(fpr[i], tpr[i])
 
     # Compute micro-average ROC curve and ROC area
-    fpr["micro"], tpr["micro"],  thresh["micro"] = roc_curve(label_array.ravel(), score_array.ravel())
+    fpr["micro"], tpr["micro"], thresh["micro"] = roc_curve(label_array.ravel(), score_array.ravel())
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
-    print('ROC Curve Thresholds', thresh["micro"])
+
+    return fpr["micro"], tpr["micro"], thresh["micro"], roc_auc["micro"]
+
+
+def plot_roc_curve(rocs, extra_name):
+    # Setup plot details
+    colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
+    lw = 2
 
     # Plot Receiver Operating Characteristic curve
     plt.clf()
-    plt.plot(fpr["micro"], tpr["micro"], color='darkorange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc["micro"])
+    for index, color in zip(range(len(rocs)), colors):
+        roc = rocs[index]
+        plt.plot(roc['fpr'], roc['tpr'], color=color, lw=lw, label='ROC curve (area = %0.2f)' % roc['auc'])
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -215,4 +226,4 @@ def generate_roc_curve(n_classes, y_label_list, y_score_list, extra_name):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristic')
     plt.legend(loc="lower right")
-    plt.savefig('plots/roc_curve_' + extra_name)
+    plt.savefig('plots/roc_curve_' + extra_name + '.png')
