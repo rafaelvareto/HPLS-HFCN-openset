@@ -29,18 +29,19 @@ def main():
     PATH = str(args.path)
     DATASET = str(args.file)
     DESCRIPTOR = str(args.desc)
+    ITERATIONS = int(args.rept)
     NUM_HASH = int(args.hash)
-    OUTPUT_NAME = DATASET.replace('.txt','') + '_' + str(NUM_HASH) + '_' + DESCRIPTOR
+    OUTPUT_NAME = DATASET.replace('.txt','') + '_' + str(NUM_HASH) + '_' + DESCRIPTOR + '_' + str(ITERATIONS)
 
     prs = []
     rocs = []
-    for index in range(int(args.rept)):
-        print('EXECUTION #%s' % str(index+1))
+    for index in range(ITERATIONS):
+        print('ITERATION #%s' % str(index+1))
         pr, roc = plshface(args)
         prs.append(pr)
         rocs.append(roc)
 
-    with open('files/plot_' + OUTPUT_NAME, 'w') as outfile:
+    with open('files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
         pickle.dump([prs, rocs], outfile)
 
     plot_precision_recall(prs, OUTPUT_NAME)
