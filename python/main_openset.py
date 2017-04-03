@@ -30,14 +30,17 @@ def main():
     DATASET = str(args.file)
     DESCRIPTOR = str(args.desc)
     NUM_HASH = int(args.hash)
-    OUTPUT_NAME = DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR
+    OUTPUT_NAME = DATASET.replace('.txt','') + '_' + str(NUM_HASH) + '_' + DESCRIPTOR
 
+    prs = []
     rocs = []
     for index in range(int(args.rept)):
         print('EXECUTION #%s' % str(index+1))
-        roc = plshface(args)
+        pr, roc = plshface(args)
+        prs.append(pr)
         rocs.append(roc)
     plot_roc_curve(rocs, OUTPUT_NAME)
+    plot_precision_recall(prs, OUTPUT_NAME)
 
         
 def plshface(args):
@@ -176,11 +179,10 @@ def plshface(args):
 
     # cmc_score_norm = np.divide(cmc_score, counterA)
     # generate_cmc_curve(cmc_score_norm, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)
-    # generate_precision_recall(1, plotting_labels, plotting_scores, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)
     
-    roc = dict()
-    roc['fpr'], roc['tpr'], roc['thresh'], roc['auc'] = generate_roc_curve(1, plotting_labels, plotting_scores)
-    return roc
+    pr = generate_precision_recall(plotting_labels, plotting_scores)
+    roc = generate_roc_curve(plotting_labels, plotting_scores)
+    return pr, roc
 
 if __name__ == "__main__":
     main()
