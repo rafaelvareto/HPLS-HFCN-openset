@@ -177,7 +177,7 @@ def generate_roc_curve(y_label_list, y_score_list):
     return roc
 
 
-def plot_precision_recall(prs, extra_name):
+def plot_precision_recall(prs, extra_name=None):
     # Setup plot details
     color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
     color_names = [name for name, color in color_dict.items()]
@@ -195,10 +195,13 @@ def plot_precision_recall(prs, extra_name):
     plt.xlim([0.0, 1.0])
     plt.title('Precision-Recall Curve')
     plt.legend(loc="lower left")
-    plt.savefig('plots/precision_recall_' + extra_name + '.png')
+    if extra_name == None:
+        plt.show()
+    else:
+        plt.savefig('plots/precision_recall_' + extra_name + '.png')
 
 
-def plot_roc_curve(rocs, extra_name):
+def plot_roc_curve(rocs, extra_name=None):
     # Setup plot details
     color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
     color_names = [name for name, color in color_dict.items()]
@@ -217,4 +220,7 @@ def plot_roc_curve(rocs, extra_name):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristic')
     plt.legend(loc="lower right")
-    plt.savefig('plots/roc_curve_' + extra_name + '.png')
+    if extra_name == None:
+        plt.show()
+    else:
+        plt.savefig('plots/roc_curve_' + extra_name + '.png')
