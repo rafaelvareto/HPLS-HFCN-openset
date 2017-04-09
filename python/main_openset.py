@@ -18,7 +18,7 @@ from vggface import VGGFace
 from pls_classifier import PLSClassifier
 
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition')
-parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./frgcv1/')
+parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='/Users/Vareto/Documents/GIT/PLSHface/python/frgcv1/')
 parser.add_argument('-f', '--file', help='Input file name', required=False, default='train_2_small.txt')
 parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
@@ -102,11 +102,14 @@ def plshface(args):
         splits.append(generate_pos_neg_dict(individuals))
 
     print('>> LEARNING PLS MODELS:')
-    input_list = itertools.izip(splits, itertools.repeat((matrix_x, matrix_y)))
+    models = []
     pool = ThreadPool(4)
-    models = pool.map(learn_plsh_model, input_list)
+    for split in splits:
+        input_list = tuple([split, (matrix_x, matrix_y)])
+        models.append(pool.apply_async(learn_plsh_model, args=(input_list,)))
     pool.close()
     pool.join()
+    models = [model.get() for model in models]
   
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
