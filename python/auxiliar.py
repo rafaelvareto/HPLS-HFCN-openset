@@ -5,6 +5,7 @@ import random
 
 from itertools import cycle
 from matplotlib import colors as mcolors
+from pls_classifier import PLSClassifier
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
@@ -91,6 +92,13 @@ def generate_pos_neg_dict(labels):
     return full_dict
 
 
+def learn_plsh_model((split, (matrix_x, matrix_y))):
+    classifier = PLSClassifier()
+    boolean_label = [split[key] for key in matrix_y]
+    model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
+    return (model, split)
+
+
 def generate_probe_histogram(individuals, values, extra_name):
     plt.clf()
     plt.bar(range(len(individuals)), values)
@@ -98,6 +106,28 @@ def generate_probe_histogram(individuals, values, extra_name):
         plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0])
     else:
         plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0] + '_ERROR')
+
+"""
+Run the given function inside *numthreads* threads, splitting its arguments into equal-sized chunks.
+"""
+def make_multithread(inner_func, numthreads):
+    def func_mt(*args):
+        length = len(args[0])
+        result = np.empty(length, dtype=np.float64)
+        args = (result,) + args
+        chunklen = (length + numthreads - 1) // numthreads
+        # Create argument tuples for each input chunk
+        chunks = [[arg[i * chunklen:(i + 1) * chunklen] for arg in args]
+                  for i in range(numthreads)]
+        # Spawn one thread per chunk
+        threads = [threading.Thread(target=inner_func, args=chunk)
+                   for chunk in chunks]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        return result
+    return func_mt
 
 
 """

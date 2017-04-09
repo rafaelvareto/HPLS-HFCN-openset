@@ -1,5 +1,6 @@
 import argparse
 import cv2 as cv
+import itertools
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
@@ -8,22 +9,23 @@ from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
+from auxiliar import learn_plsh_model
 from auxiliar import load_txt_file
 from auxiliar import split_known_unknown_sets, split_train_test_sets
 from descriptor import Descriptor
+from multiprocessing.pool import Pool, ThreadPool
 from vggface import VGGFace
 from pls_classifier import PLSClassifier
 
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition')
 parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./frgcv1/')
-parser.add_argument('-f', '--file', help='Input file name', required=False, default='set_4_label.txt')
+parser.add_argument('-f', '--file', help='Input file name', required=False, default='train_2_small.txt')
 parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-iw', '--width', help='Default image width', required=False, default=128)
 parser.add_argument('-ih', '--height', help='Default image height', required=False, default=144)
 args = parser.parse_args()
-
 
 def main():
     PATH = str(args.path)
@@ -58,7 +60,6 @@ def plshface(args):
 
     matrix_x = []
     matrix_y = []
-    models = []
     splits = []
 
     plotting_labels = []
@@ -101,14 +102,14 @@ def plshface(args):
         splits.append(generate_pos_neg_dict(individuals))
 
     print('>> LEARNING PLS MODELS:')
-    counter = 0
+    models = []
+    pool = ThreadPool(4)
     for split in splits:
-        classifier = PLSClassifier()
-        boolean_label = [split[key] for key in matrix_y]
-        model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
-        models.append((model, split))
-        counter += 1
-        print(counter)
+        input_list = tuple([split, (matrix_x, matrix_y)])
+        models.append(pool.apply_async(learn_plsh_model, args=(input_list,)))
+    pool.close()
+    pool.join()
+    models = [model.get() for model in models]
   
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
