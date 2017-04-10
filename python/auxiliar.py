@@ -94,35 +94,19 @@ def generate_pos_neg_dict(labels):
     full_dict = dict((key, val) for key, val in full_set)
     return full_dict
 
+def split_into_chunks(full_list, num_chunks):
+    split_list = []
+    chunk_size = int(len(full_list) / num_chunks) + 1
+    for index in range(0, len(full_list), chunk_size):
+        split_list.append(full_list[index:index+chunk_size])
+    return split_list
 
+    
 def learn_plsh_model((split, (matrix_x, matrix_y))):
     classifier = PLSClassifier()
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
     return (model, split)
-
-
-def make_multithread(inner_func, numthreads):
-    """
-    Run the given function inside *numthreads* threads, splitting its arguments into equal-sized chunks.
-    """
-    def func_mt(*args):
-        length = len(args[0])
-        result = np.empty(length, dtype=np.float64)
-        args = (result,) + args
-        chunklen = (length + numthreads - 1) // numthreads
-        # Create argument tuples for each input chunk
-        chunks = [[arg[i * chunklen:(i + 1) * chunklen] for arg in args]
-                  for i in range(numthreads)]
-        # Spawn one thread per chunk
-        threads = [threading.Thread(target=inner_func, args=chunk)
-                   for chunk in chunks]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-        return result
-    return func_mt
 
 
 def generate_probe_histogram(individuals, values, extra_name):
