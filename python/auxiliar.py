@@ -99,22 +99,13 @@ def learn_plsh_model((split, (matrix_x, matrix_y))):
     classifier = PLSClassifier()
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
-    print(model)
     return (model, split)
 
 
-def generate_probe_histogram(individuals, values, extra_name):
-    plt.clf()
-    plt.bar(range(len(individuals)), values)
-    if sample_name == result[0][0]:
-        plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0])
-    else:
-        plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0] + '_ERROR')
-
-"""
-Run the given function inside *numthreads* threads, splitting its arguments into equal-sized chunks.
-"""
 def make_multithread(inner_func, numthreads):
+    """
+    Run the given function inside *numthreads* threads, splitting its arguments into equal-sized chunks.
+    """
     def func_mt(*args):
         length = len(args[0])
         result = np.empty(length, dtype=np.float64)
@@ -134,12 +125,21 @@ def make_multithread(inner_func, numthreads):
     return func_mt
 
 
-"""
-The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
-It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
-Templates are compared and ranked based on their similarity.
-"""
+def generate_probe_histogram(individuals, values, extra_name):
+    plt.clf()
+    plt.bar(range(len(individuals)), values)
+    if sample_name == result[0][0]:
+        plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0])
+    else:
+        plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0] + '_ERROR')
+
+
 def generate_cmc_curve(cmc_scores, extra_name):
+    """
+    The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
+    It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
+    Templates are compared and ranked based on their similarity.
+    """
     x_axis = range(len(cmc_scores))
     y_axis = cmc_scores
     print('CMC Curve', cmc_scores)
@@ -156,12 +156,12 @@ def generate_cmc_curve(cmc_scores, extra_name):
     # plt.show()
 
 
-"""
-A system with high recall but low precision returns many results, but most of its predicted labels are incorrect when compared to the training labels. 
-A system with high precision but low recall is just the opposite, returning very few results, but most of its predicted labels are correct when compared to the training labels. 
-An ideal system with high precision and high recall will return many results, with all results labeled correctly.
-"""
 def generate_precision_recall(y_label_list, y_score_list):
+    """
+    A system with high recall but low precision returns many results, but most of its predicted labels are incorrect when compared to the training labels. 
+    A system with high precision but low recall is just the opposite, returning very few results, but most of its predicted labels are correct when compared to the training labels. 
+    An ideal system with high precision and high recall will return many results, with all results labeled correctly.
+    """
     # Prepare input data
     label_list = []
     score_list = []
@@ -186,12 +186,12 @@ def generate_precision_recall(y_label_list, y_score_list):
     return pr
 
 
-"""
-ROC curves typically feature true positive rate on the Y axis, and false positive rate on the X axis. 
-This means that the top left corner of the plot is the ideal point - a false positive rate of zero, and a true positive rate of one. 
-This is not very realistic, but it does mean that a larger area under the curve (AUC) is usually better.
-"""
 def generate_roc_curve(y_label_list, y_score_list):
+    """
+    ROC curves typically feature true positive rate on the Y axis, and false positive rate on the X axis. 
+    This means that the top left corner of the plot is the ideal point - a false positive rate of zero, and a true positive rate of one. 
+    This is not very realistic, but it does mean that a larger area under the curve (AUC) is usually better.
+    """
     # Prepare input data
     label_list = []
     score_list = []

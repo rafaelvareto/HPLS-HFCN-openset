@@ -15,10 +15,11 @@ from auxiliar import learn_plsh_model
 from auxiliar import load_txt_file
 from auxiliar import split_known_unknown_sets, split_train_test_sets
 from descriptor import Descriptor
+from joblib import Parallel, delayed
 from matplotlib import pyplot
-from multiprocessing.pool import Pool, ThreadPool
-from vggface import VGGFace
 from pls_classifier import PLSClassifier
+from vggface import VGGFace
+
 
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition')
 parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./frgcv1/')
@@ -31,6 +32,7 @@ parser.add_argument('-ih', '--height', help='Default image height', required=Fal
 parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)
 parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
 args = parser.parse_args()
+
 
 def main():
     PATH = str(args.path)
@@ -110,14 +112,9 @@ def plshface(args):
         splits.append(generate_pos_neg_dict(individuals))
 
     print('>> LEARNING PLS MODELS:')
-    models = []
-    pool = ThreadPool(4)
-    for split in splits:
-        input_list = tuple([split, (matrix_x, matrix_y)])
-        models.append(pool.apply_async(learn_plsh_model, args=(input_list,)))
-    pool.close()
-    pool.join()
-    models = [model.get() for model in models]
+    input_list = itertools.izip(splits, itertools.repeat((matrix_x, matrix_y)))
+    models = Parallel(n_jobs=1, verbose=11, backend='threading')(
+             map(delayed(learn_plsh_model), input_list))
   
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
