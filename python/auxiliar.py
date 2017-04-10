@@ -99,6 +99,7 @@ def learn_plsh_model((split, (matrix_x, matrix_y))):
     classifier = PLSClassifier()
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
+    print(model)
     return (model, split)
 
 
