@@ -1,9 +1,11 @@
 import argparse
 import cv2 as cv
 import itertools
-import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 import pickle
+
+matplotlib.use('Agg')
 
 from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
@@ -13,6 +15,7 @@ from auxiliar import learn_plsh_model
 from auxiliar import load_txt_file
 from auxiliar import split_known_unknown_sets, split_train_test_sets
 from descriptor import Descriptor
+from matplotlib import pyplot
 from multiprocessing.pool import Pool, ThreadPool
 from vggface import VGGFace
 from pls_classifier import PLSClassifier
@@ -25,8 +28,8 @@ parser.add_argument('-r', '--rept', help='Number of executions', required=False,
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-iw', '--width', help='Default image width', required=False, default=128)
 parser.add_argument('-ih', '--height', help='Default image height', required=False, default=144)
-parser.add_argument('-kss', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)
-parser.add_argument('-tss', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
+parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)
+parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
 args = parser.parse_args()
 
 def main():
@@ -46,11 +49,11 @@ def main():
         prs.append(pr)
         rocs.append(roc)
 
-        with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
-            pickle.dump([prs, rocs], outfile)
+    with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+        pickle.dump([prs, rocs], outfile)
 
-        plot_precision_recall(prs, OUTPUT_NAME)
-        plot_roc_curve(rocs, OUTPUT_NAME)
+    plot_precision_recall(prs, OUTPUT_NAME)
+    plot_roc_curve(rocs, OUTPUT_NAME)
     
 
 def plshface(args):
