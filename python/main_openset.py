@@ -1,9 +1,11 @@
 import argparse
 import cv2 as cv
 import itertools
-import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 import pickle
+
+matplotlib.use('Agg')
 
 from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
@@ -13,6 +15,7 @@ from auxiliar import learn_plsh_model
 from auxiliar import load_txt_file
 from auxiliar import split_known_unknown_sets, split_train_test_sets
 from descriptor import Descriptor
+from matplotlib import pyplot
 from multiprocessing.pool import Pool, ThreadPool
 from vggface import VGGFace
 from pls_classifier import PLSClassifier
@@ -25,6 +28,8 @@ parser.add_argument('-r', '--rept', help='Number of executions', required=False,
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-iw', '--width', help='Default image width', required=False, default=128)
 parser.add_argument('-ih', '--height', help='Default image height', required=False, default=144)
+parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)
+parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
 args = parser.parse_args()
 
 def main():
@@ -32,8 +37,9 @@ def main():
     DATASET = str(args.file)
     DESCRIPTOR = str(args.desc)
     ITERATIONS = int(args.rept)
+    KNOWN_SET_SIZE = float(args.known_set_size)
     NUM_HASH = int(args.hash)
-    OUTPUT_NAME = DATASET.replace('.txt','') + '_' + str(NUM_HASH) + '_' + DESCRIPTOR + '_' + str(ITERATIONS)
+    OUTPUT_NAME = DATASET.replace('.txt','') + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(ITERATIONS)
 
     prs = []
     rocs = []
@@ -43,11 +49,11 @@ def main():
         prs.append(pr)
         rocs.append(roc)
 
-    with open('files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
-        pickle.dump([prs, rocs], outfile)
+        with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+            pickle.dump([prs, rocs], outfile)
 
-    plot_precision_recall(prs, OUTPUT_NAME)
-    plot_roc_curve(rocs, OUTPUT_NAME)
+        plot_precision_recall(prs, OUTPUT_NAME)
+        plot_roc_curve(rocs, OUTPUT_NAME)
     
 
 def plshface(args):
@@ -57,6 +63,8 @@ def plshface(args):
     NUM_HASH = int(args.hash)
     IMG_WIDTH = int(args.width)
     IMG_HEIGHT = int(args.height)
+    KNOWN_SET_SIZE = float(args.known_set_size)
+    TRAIN_SET_SIZE = float(args.train_set_size)
 
     matrix_x = []
     matrix_y = []
@@ -71,8 +79,8 @@ def plshface(args):
     
     print('>> EXPLORING DATASET')
     dataset_list = load_txt_file(PATH + DATASET)
-    known_tuples, unknown_tuples = split_known_unknown_sets(dataset_list, known_set_size=0.5)
-    known_train, known_test = split_train_test_sets(known_tuples, train_set_size=0.5)
+    known_tuples, unknown_tuples = split_known_unknown_sets(dataset_list, known_set_size=KNOWN_SET_SIZE)
+    known_train, known_test = split_train_test_sets(known_tuples, train_set_size=TRAIN_SET_SIZE)
 
     print('>> LOADING GALLERY: {0} samples'.format(len(known_train)))
     counterA = 0

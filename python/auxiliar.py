@@ -1,10 +1,13 @@
 import cv2 as cv
+import matplotlib
 import numpy as np
-import matplotlib.pyplot as plt
 import random
+
+matplotlib.use('Agg')
 
 from itertools import cycle
 from matplotlib import colors as mcolors
+from matplotlib import pyplot as plt
 from pls_classifier import PLSClassifier
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -228,7 +231,7 @@ def plot_precision_recall(prs, extra_name=None):
     if extra_name == None:
         plt.show()
     else:
-        plt.savefig('plots/precision_recall_' + extra_name + '.png')
+        plt.savefig('./plots/precision_recall_' + extra_name + '.png')
 
 
 def plot_roc_curve(rocs, extra_name=None):
@@ -253,4 +256,4 @@ def plot_roc_curve(rocs, extra_name=None):
     if extra_name == None:
         plt.show()
     else:
-        plt.savefig('plots/roc_curve_' + extra_name + '.png')
+        plt.savefig('./plots/roc_curve_' + extra_name + '.png')
