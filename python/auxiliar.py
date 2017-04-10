@@ -228,7 +228,7 @@ def plot_precision_recall(prs, extra_name=None):
     if extra_name == None:
         plt.show()
     else:
-        plt.savefig('plots/precision_recall_' + extra_name + '.png')
+        plt.savefig('./plots/precision_recall_' + extra_name + '.png')
 
 
 def plot_roc_curve(rocs, extra_name=None):
@@ -253,4 +253,4 @@ def plot_roc_curve(rocs, extra_name=None):
     if extra_name == None:
         plt.show()
     else:
-        plt.savefig('plots/roc_curve_' + extra_name + '.png')
+        plt.savefig('./plots/roc_curve_' + extra_name + '.png')
