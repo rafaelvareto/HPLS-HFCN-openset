@@ -49,11 +49,11 @@ def main():
         prs.append(pr)
         rocs.append(roc)
 
-    with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
-        pickle.dump([prs, rocs], outfile)
+        with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+            pickle.dump([prs, rocs], outfile)
 
-    plot_precision_recall(prs, OUTPUT_NAME)
-    plot_roc_curve(rocs, OUTPUT_NAME)
+        plot_precision_recall(prs, OUTPUT_NAME)
+        plot_roc_curve(rocs, OUTPUT_NAME)
     
 
 def plshface(args):
