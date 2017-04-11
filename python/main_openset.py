@@ -113,8 +113,12 @@ def plshface(args):
 
     print('>> LEARNING PLS MODELS:')
     input_list = itertools.izip(splits, itertools.repeat((matrix_x, matrix_y)))
-    models = Parallel(n_jobs=1, verbose=11, backend='threading')(
-             map(delayed(learn_plsh_model), input_list))
+    numpy_x = np.array(matrix_x)
+    numpy_y = np.array(matrix_y)
+    numpy_s = np.array(splits)
+    models = Parallel(n_jobs=-2, verbose=11, backend='multiprocessing')(
+        delayed(learn_plsh_model) (numpy_x, numpy_y, split) for split in numpy_s
+    )
   
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0

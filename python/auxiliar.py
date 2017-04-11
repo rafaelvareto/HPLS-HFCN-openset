@@ -102,7 +102,7 @@ def split_into_chunks(full_list, num_chunks):
     return split_list
 
     
-def learn_plsh_model((split, (matrix_x, matrix_y))):
+def learn_plsh_model(matrix_x, matrix_y, split):
     classifier = PLSClassifier()
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
