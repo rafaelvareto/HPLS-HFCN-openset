@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 import os
 import pickle
@@ -7,6 +7,7 @@ matplotlib.use('Agg')
 
 from itertools import cycle
 from matplotlib import colors as mcolors
+from matplotlib import pyplot as plt
 
 def plot_precision_recall(prs, extra_name=None):
     # Setup plot details
@@ -26,6 +27,7 @@ def plot_precision_recall(prs, extra_name=None):
     plt.xlim([0.0, 1.0])
     plt.title('Precision-Recall Curve')
     plt.legend(loc="lower left")
+    plt.grid()
     if extra_name == None:
         plt.show()
     else:
@@ -51,6 +53,7 @@ def plot_roc_curve(rocs, extra_name=None):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristic')
     plt.legend(loc="lower right")
+    plt.grid()
     if extra_name == None:
         plt.show()
     else:
