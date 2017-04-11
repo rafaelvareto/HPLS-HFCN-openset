@@ -9,7 +9,6 @@ from matplotlib import pyplot as plt
 
 def main():
     """
-    Fixing known_set_size and varying number of hashing functions
     Fixing number of hashing functions and varying known_set_size
     """
     substring = '_100_'

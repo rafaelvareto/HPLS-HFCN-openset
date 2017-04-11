@@ -124,19 +124,19 @@ def generate_cmc_curve(cmc_scores, extra_name):
     It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
     Templates are compared and ranked based on their similarity.
     """
-    x_axis = range(len(cmc_scores))
-    y_axis = cmc_scores
-    print('CMC Curve', cmc_scores)
-
     # Plot Cumulative Matching Characteristic curve
     plt.clf()
-    plt.plot(x_axis, y_axis, color='blue', linestyle='-')
+    for cmc in cmc_scores:
+        x_axis = range(len(cmc))
+        y_axis = cmc
+        plt.plot(x_axis, y_axis, color='blue', linestyle='-')
+    
     plt.xlim([0, len(cmc_scores)])
     plt.ylim([0.0, 1.05])
     plt.xlabel('Rank')
     plt.ylabel('Accuracy Rate')
     plt.title('Cumulative Matching Characteristic')
-    plt.savefig('plots/cmc_curve_' + extra_name)
+    plt.savefig('plots/cmc_curve_' + extra_name + '.png')
     # plt.show()
 
 
