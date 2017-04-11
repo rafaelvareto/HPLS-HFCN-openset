@@ -94,12 +94,18 @@ def generate_pos_neg_dict(labels):
     full_dict = dict((key, val) for key, val in full_set)
     return full_dict
 
+def split_into_chunks(full_list, num_chunks):
+    split_list = []
+    chunk_size = int(len(full_list) / num_chunks) + 1
+    for index in range(0, len(full_list), chunk_size):
+        split_list.append(full_list[index:index+chunk_size])
+    return split_list
 
+    
 def learn_plsh_model((split, (matrix_x, matrix_y))):
     classifier = PLSClassifier()
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
-    print(model)
     return (model, split)
 
 
@@ -111,57 +117,35 @@ def generate_probe_histogram(individuals, values, extra_name):
     else:
         plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0] + '_ERROR')
 
-"""
-Run the given function inside *numthreads* threads, splitting its arguments into equal-sized chunks.
-"""
-def make_multithread(inner_func, numthreads):
-    def func_mt(*args):
-        length = len(args[0])
-        result = np.empty(length, dtype=np.float64)
-        args = (result,) + args
-        chunklen = (length + numthreads - 1) // numthreads
-        # Create argument tuples for each input chunk
-        chunks = [[arg[i * chunklen:(i + 1) * chunklen] for arg in args]
-                  for i in range(numthreads)]
-        # Spawn one thread per chunk
-        threads = [threading.Thread(target=inner_func, args=chunk)
-                   for chunk in chunks]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-        return result
-    return func_mt
 
-
-"""
-The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
-It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
-Templates are compared and ranked based on their similarity.
-"""
 def generate_cmc_curve(cmc_scores, extra_name):
-    x_axis = range(len(cmc_scores))
-    y_axis = cmc_scores
-    print('CMC Curve', cmc_scores)
-
+    """
+    The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
+    It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
+    Templates are compared and ranked based on their similarity.
+    """
     # Plot Cumulative Matching Characteristic curve
     plt.clf()
-    plt.plot(x_axis, y_axis, color='blue', linestyle='-')
+    for cmc in cmc_scores:
+        x_axis = range(len(cmc))
+        y_axis = cmc
+        plt.plot(x_axis, y_axis, color='blue', linestyle='-')
+    
     plt.xlim([0, len(cmc_scores)])
     plt.ylim([0.0, 1.05])
     plt.xlabel('Rank')
     plt.ylabel('Accuracy Rate')
     plt.title('Cumulative Matching Characteristic')
-    plt.savefig('plots/cmc_curve_' + extra_name)
+    plt.savefig('plots/cmc_curve_' + extra_name + '.png')
     # plt.show()
 
 
-"""
-A system with high recall but low precision returns many results, but most of its predicted labels are incorrect when compared to the training labels. 
-A system with high precision but low recall is just the opposite, returning very few results, but most of its predicted labels are correct when compared to the training labels. 
-An ideal system with high precision and high recall will return many results, with all results labeled correctly.
-"""
 def generate_precision_recall(y_label_list, y_score_list):
+    """
+    A system with high recall but low precision returns many results, but most of its predicted labels are incorrect when compared to the training labels. 
+    A system with high precision but low recall is just the opposite, returning very few results, but most of its predicted labels are correct when compared to the training labels. 
+    An ideal system with high precision and high recall will return many results, with all results labeled correctly.
+    """
     # Prepare input data
     label_list = []
     score_list = []
@@ -186,12 +170,12 @@ def generate_precision_recall(y_label_list, y_score_list):
     return pr
 
 
-"""
-ROC curves typically feature true positive rate on the Y axis, and false positive rate on the X axis. 
-This means that the top left corner of the plot is the ideal point - a false positive rate of zero, and a true positive rate of one. 
-This is not very realistic, but it does mean that a larger area under the curve (AUC) is usually better.
-"""
 def generate_roc_curve(y_label_list, y_score_list):
+    """
+    ROC curves typically feature true positive rate on the Y axis, and false positive rate on the X axis. 
+    This means that the top left corner of the plot is the ideal point - a false positive rate of zero, and a true positive rate of one. 
+    This is not very realistic, but it does mean that a larger area under the curve (AUC) is usually better.
+    """
     # Prepare input data
     label_list = []
     score_list = []
@@ -229,6 +213,7 @@ def plot_precision_recall(prs, extra_name=None):
     plt.xlim([0.0, 1.0])
     plt.title('Precision-Recall Curve')
     plt.legend(loc="lower left")
+    plt.grid()
     if extra_name == None:
         plt.show()
     else:
@@ -254,6 +239,7 @@ def plot_roc_curve(rocs, extra_name=None):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristic')
     plt.legend(loc="lower right")
+    plt.grid()
     if extra_name == None:
         plt.show()
     else:

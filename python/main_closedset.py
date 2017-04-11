@@ -13,7 +13,7 @@ from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import learn_plsh_model
 from auxiliar import load_txt_file
-from auxiliar import split_known_unknown_sets, split_train_test_sets
+from auxiliar import split_train_test_sets
 from descriptor import Descriptor
 from joblib import Parallel, delayed
 from matplotlib import pyplot
@@ -29,7 +29,6 @@ parser.add_argument('-r', '--rept', help='Number of executions', required=False,
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-iw', '--width', help='Default image width', required=False, default=128)
 parser.add_argument('-ih', '--height', help='Default image height', required=False, default=144)
-parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)
 parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
 args = parser.parse_args()
 
@@ -39,23 +38,21 @@ def main():
     DATASET = str(args.file)
     DESCRIPTOR = str(args.desc)
     ITERATIONS = int(args.rept)
-    KNOWN_SET_SIZE = float(args.known_set_size)
     NUM_HASH = int(args.hash)
-    OUTPUT_NAME = DATASET.replace('.txt','') + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(ITERATIONS)
+    TRAIN_SET_SIZE = float(args.train_set_size)
 
-    prs = []
-    rocs = []
+    OUTPUT_NAME = DATASET.replace('.txt','') + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+
+    cmc_values = []
     for index in range(ITERATIONS):
         print('ITERATION #%s' % str(index+1))
-        pr, roc = plshface(args)
-        prs.append(pr)
-        rocs.append(roc)
+        cmc = plshface(args)
+        cmc_values.append(cmc)
 
-        with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
-            pickle.dump([prs, rocs], outfile)
+        with open('./files/CS_plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+            pickle.dump([cmc_values], outfile)
 
-        plot_precision_recall(prs, OUTPUT_NAME)
-        plot_roc_curve(rocs, OUTPUT_NAME)
+        generate_cmc_curve(cmc_values, 'CS_plot_' + OUTPUT_NAME)
     
 
 def plshface(args):
@@ -65,7 +62,6 @@ def plshface(args):
     NUM_HASH = int(args.hash)
     IMG_WIDTH = int(args.width)
     IMG_HEIGHT = int(args.height)
-    KNOWN_SET_SIZE = float(args.known_set_size)
     TRAIN_SET_SIZE = float(args.train_set_size)
 
     matrix_x = []
@@ -81,8 +77,7 @@ def plshface(args):
     
     print('>> EXPLORING DATASET')
     dataset_list = load_txt_file(PATH + DATASET)
-    known_tuples, unknown_tuples = split_known_unknown_sets(dataset_list, known_set_size=KNOWN_SET_SIZE)
-    known_train, known_test = split_train_test_sets(known_tuples, train_set_size=TRAIN_SET_SIZE)
+    known_train, known_test = split_train_test_sets(dataset_list, train_set_size=TRAIN_SET_SIZE)
 
     print('>> LOADING GALLERY: {0} samples'.format(len(known_train)))
     counterA = 0
@@ -157,47 +152,8 @@ def plshface(args):
         plotting_labels.append([(sample_name, 1)])
         plotting_scores.append([(sample_name, output)])
 
-    print('>> LOADING UNKNOWN PROBE: {0} samples'.format(len(unknown_tuples)))
-    counterC = 0
-    for probe_sample in unknown_tuples:
-        sample_path = probe_sample[0]
-        sample_name = probe_sample[1]
-
-        query_path = PATH + sample_path 
-        query_image = cv.imread(query_path, cv.IMREAD_COLOR)
-        if DESCRIPTOR == 'hog':
-            query_image = cv.resize(query_image, (IMG_HEIGHT, IMG_WIDTH))
-            feature_vector = Descriptor.get_hog(query_image)
-        elif DESCRIPTOR == 'df':    
-            feature_vector = Descriptor.get_deep_feature(query_image, vgg_model)
-
-        vote_dict = dict(map(lambda vote: (vote, 0), individuals))
-        for model in models:
-            pos_list = [key for key, value in model[1].iteritems() if value == 1]
-            response = model[0].predict_confidence(feature_vector)
-            for pos in pos_list:
-                vote_dict[pos] += response
-        result = vote_dict.items()
-        result.sort(key=lambda tup: tup[1], reverse=True)
-
-        counterC += 1
-        denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
-        if denominator > 0:
-            output = result[0][1] / denominator
-        else:
-            output = result[0][1]
-        print(counterC, sample_name, result[0][0], output)
-
-        # Getting unknown set plotting relevant information
-        plotting_labels.append([(sample_name, -1)])
-        plotting_scores.append([(sample_name, output)])
-
-    # cmc_score_norm = np.divide(cmc_score, counterA)
-    # generate_cmc_curve(cmc_score_norm, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)
-    
-    pr = generate_precision_recall(plotting_labels, plotting_scores)
-    roc = generate_roc_curve(plotting_labels, plotting_scores)
-    return pr, roc
+    cmc_score_norm = np.divide(cmc_score, counterA)
+    return cmc_score_norm
 
 if __name__ == "__main__":
     main()
