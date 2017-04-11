@@ -87,6 +87,7 @@ def sliding_window(image, window_size, step_size):
 
 def generate_pos_neg_dict(labels):
     to_shuffle = [item for item in labels]
+    np.random.seed(0)
     np.random.shuffle(to_shuffle)
     neg_set = map(lambda neg: (neg, -1), to_shuffle[0:(len(labels) / 2)])
     pos_set = map(lambda pos: (pos, +1), to_shuffle[(len(labels) / 2):len(labels)])

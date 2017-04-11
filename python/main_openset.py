@@ -80,9 +80,15 @@ def plshface(args):
         vgg_model = VGGFace()
     
     print('>> EXPLORING DATASET')
-    dataset_list = load_txt_file(PATH + DATASET)
-    known_tuples, unknown_tuples = split_known_unknown_sets(dataset_list, known_set_size=KNOWN_SET_SIZE)
-    known_train, known_test = split_train_test_sets(known_tuples, train_set_size=TRAIN_SET_SIZE)
+    # dataset_list = load_txt_file(PATH + DATASET)
+    # known_tuples, unknown_tuples = split_known_unknown_sets(dataset_list, known_set_size=KNOWN_SET_SIZE)
+    # known_train, known_test = split_train_test_sets(known_tuples, train_set_size=TRAIN_SET_SIZE)
+
+    # with open('features.file', 'w') as outfile:
+    #     pickle.dump([known_tuples, unknown_tuples, known_train, known_test], outfile)
+
+    with open('features.file') as infile:
+        known_tuples, unknown_tuples, known_train, known_test = pickle.load(infile)
 
     print('>> LOADING GALLERY: {0} samples'.format(len(known_train)))
     counterA = 0
