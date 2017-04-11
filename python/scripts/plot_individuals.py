@@ -9,23 +9,24 @@ from matplotlib import pyplot as plt
 
 def main():
     """
-    Fixing known_set_size and varying number of hashing functions
+    Fixing number of hashing functions and varying known_set_size
     """
     descriptor = 'hog'
-    known_sets = ['_0.1_', '_0.5_', '_0.9_']
-    path_files = os.listdir('.')
+    hashing_functions = ['100', '200', '300', '400']
+    enclosed_folder = '../files/'
+    path_files = os.listdir(enclosed_folder)
 
     # Each iteration plots a chart
-    for known_set in known_sets:
+    for function in hashing_functions:
         prs_dict = {}
         rocs_dict = {}
         files_list = []
         for file in path_files:
             if file.endswith('.file'):
-                if descriptor in file and known_set in file:
+                if descriptor in file and function in file:
                     files_list.append(file)
                     print(file)
-                    with open(file) as infile:
+                    with open(enclosed_folder + file) as infile:
                         file_prs, file_rocs = pickle.load(infile)
                         prs_dict[file] = file_prs
                         rocs_dict[file] = file_rocs
@@ -54,7 +55,7 @@ def main():
         plt.clf()
         for key in auc_dict.keys():
             print('Plotting %s' % key)
-            x_values = [value for value in range(100, 401, 100)]
+            x_values = [value for value in range(10, 91, 40)]
             e_axis = [item[1] for item in auc_dict[key]] 
             y_axis = [item[0] for item in auc_dict[key]]
             x_axis = x_values[0:len(y_axis)]
@@ -64,15 +65,15 @@ def main():
             plt.errorbar(x_axis, y_axis, e_axis, label=key, linestyle='-', marker='o')
 
         plt.legend(loc='lower left')
-        plt.title('Variable hashing functions: %s %s known' % (descriptor.upper(),known_set.replace('_','')))
-        plt.xlabel('#Hashing funtions')
+        plt.title('Variable known individuals: %s %s models' % (descriptor.upper(), function))
+        plt.xlabel('#Known Individuals')
         plt.ylabel('AUC')
-        plt.xlim([50.0, 450.0])
+        plt.xlim([0.0, 100])
         plt.ylim([0.7, 1.05])
         plt.grid()
         # plt.show()
-        plt.savefig('./hashing' + '_' + descriptor + known_set + 
-            '_'.join(auc_dict.keys()).replace('label_','') + '.png')
+        plt.savefig('./individuals' + '_' + descriptor + '_' + function + 
+            '_' + '_'.join(auc_dict.keys()).replace('label_','') + '.png')
         
 if __name__ == "__main__":
     main()
