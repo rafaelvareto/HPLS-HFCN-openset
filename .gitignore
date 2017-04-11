@@ -4,6 +4,7 @@
 *.jpg
 *.jpeg
 *.png
+*.string
 *.txt
 /data/
 
