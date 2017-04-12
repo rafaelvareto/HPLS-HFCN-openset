@@ -23,7 +23,7 @@ from vggface import VGGFace
 
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition')
 parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./frgcv1/')
-parser.add_argument('-f', '--file', help='Input file name', required=False, default='train_2_small.txt')
+parser.add_argument('-f', '--file', help='Input file name', required=False, default='set_1_label.txt')
 parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
@@ -73,22 +73,24 @@ def plshface(args):
     splits = []
 
     plotting_labels = []
-    plotting_scores = []
+    plotting_scores1 = []
+    plotting_scores2 = []
+    plotting_scores3 = []
 
     vgg_model = None
     if DESCRIPTOR == 'df':
         vgg_model = VGGFace()
     
     print('>> EXPLORING DATASET')
-    # dataset_list = load_txt_file(PATH + DATASET)
-    # known_tuples, unknown_tuples = split_known_unknown_sets(dataset_list, known_set_size=KNOWN_SET_SIZE)
-    # known_train, known_test = split_train_test_sets(known_tuples, train_set_size=TRAIN_SET_SIZE)
+    dataset_list = load_txt_file(PATH + DATASET)
+    known_tuples, unknown_tuples = split_known_unknown_sets(dataset_list, known_set_size=KNOWN_SET_SIZE)
+    known_train, known_test = split_train_test_sets(known_tuples, train_set_size=TRAIN_SET_SIZE)
 
     # with open('features.file', 'w') as outfile:
     #     pickle.dump([known_tuples, unknown_tuples, known_train, known_test], outfile)
 
-    with open('features.file') as infile:
-        known_tuples, unknown_tuples, known_train, known_test = pickle.load(infile)
+    # with open('features.file') as infile:
+    #     known_tuples, unknown_tuples, known_train, known_test = pickle.load(infile)
 
     print('>> LOADING GALLERY: {0} samples'.format(len(known_train)))
     counterA = 0
@@ -154,18 +156,34 @@ def plshface(args):
                 if result[inner][0] == sample_name:
                     cmc_score[outer] += 1
                     break
-        
         counterB += 1
-        denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
-        if denominator > 0:
-            output = result[0][1] / denominator
+        
+        # Thresholds
+        denominator1 = np.absolute(np.mean([result[1][1], result[2][1]]))
+        if denominator1 > 0:
+            output1 = result[0][1] / denominator1
         else:
-            output = result[0][1]
-        print(counterB, sample_name, result[0][0], output)
+            output1 = result[0][1]
+
+        denominator2 = result[1][1]
+        if denominator2 > 0:
+            output2 = result[0][1] / denominator2
+        else:
+            output2 = result[0][1]
+
+        denominator3 = np.absolute(np.mean([result[index][1] for index in range(1,int(len(result)*0.05))]))
+        if denominator3 > 0:
+            output3 = result[0][1] / denominator3
+        else:
+            output3 = result[0][1]
+
+        print(counterB, sample_name, result[0][0], output1, output2, output3)
 
         # Getting known set plotting relevant information
         plotting_labels.append([(sample_name, 1)])
-        plotting_scores.append([(sample_name, output)])
+        plotting_scores1.append([(sample_name, output1)])
+        plotting_scores2.append([(sample_name, output2)])
+        plotting_scores3.append([(sample_name, output3)])
 
     print('>> LOADING UNKNOWN PROBE: {0} samples'.format(len(unknown_tuples)))
     counterC = 0
@@ -189,22 +207,39 @@ def plshface(args):
                 vote_dict[pos] += response
         result = vote_dict.items()
         result.sort(key=lambda tup: tup[1], reverse=True)
-
         counterC += 1
-        denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
-        if denominator > 0:
-            output = result[0][1] / denominator
+
+        # Thresholds
+        denominator1 = np.absolute(np.mean([result[1][1], result[2][1]]))
+        if denominator1 > 0:
+            output1 = result[0][1] / denominator1
         else:
-            output = result[0][1]
-        print(counterC, sample_name, result[0][0], output)
+            output1 = result[0][1]
+
+        denominator2 = result[1][1]
+        if denominator2 > 0:
+            output2 = result[0][1] / denominator2
+        else:
+            output2 = result[0][1]
+
+        denominator3 = np.absolute(np.mean([result[index][1] for index in range(1,int(len(result)*0.05))]))
+        if denominator3 > 0:
+            output3 = result[0][1] / denominator3
+        else:
+            output3 = result[0][1]
+
+        print(counterB, sample_name, result[0][0], output1, output2, output3)
 
         # Getting unknown set plotting relevant information
         plotting_labels.append([(sample_name, -1)])
-        plotting_scores.append([(sample_name, output)])
+        plotting_scores1.append([(sample_name, output1)])
+        plotting_scores2.append([(sample_name, output2)])
+        plotting_scores3.append([(sample_name, output3)])
 
     # cmc_score_norm = np.divide(cmc_score, counterA)
     # generate_cmc_curve(cmc_score_norm, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)
     
+    plotting_scores = [plotting_scores1, plotting_scores2, plotting_scores3]
     pr = generate_precision_recall(plotting_labels, plotting_scores)
     roc = generate_roc_curve(plotting_labels, plotting_scores)
     return pr, roc

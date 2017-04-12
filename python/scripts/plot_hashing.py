@@ -11,6 +11,7 @@ def main():
     """
     Fixing known_set_size and varying number of hashing functions
     """
+    dataset = 'FRGCv1'
     descriptor = 'hog'
     enclosed_folder = '../files/'
     known_sets = ['_0.1_', '_0.5_', '_0.9_']
@@ -65,8 +66,8 @@ def main():
             plt.errorbar(x_axis, y_axis, e_axis, label=key, linestyle='-', marker='o')
 
         plt.legend(loc='lower left')
-        plt.title('Variable hashing functions: %s %s known' % (descriptor.upper(),known_set.replace('_','')))
-        plt.xlabel('#Hashing funtions')
+        plt.title('%s: %s %s known' % (dataset, descriptor.upper(),known_set.replace('_','')))
+        plt.xlabel('#hashing functions')
         plt.ylabel('AUC')
         plt.xlim([50.0, 450.0])
         plt.ylim([0.7, 1.05])

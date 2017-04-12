@@ -87,7 +87,7 @@ def sliding_window(image, window_size, step_size):
 
 def generate_pos_neg_dict(labels):
     to_shuffle = [item for item in labels]
-    np.random.seed(0)
+    # np.random.seed(0)
     np.random.shuffle(to_shuffle)
     neg_set = map(lambda neg: (neg, -1), to_shuffle[0:(len(labels) / 2)])
     pos_set = map(lambda pos: (pos, +1), to_shuffle[(len(labels) / 2):len(labels)])
@@ -141,62 +141,68 @@ def generate_cmc_curve(cmc_scores, extra_name):
     # plt.show()
 
 
-def generate_precision_recall(y_label_list, y_score_list):
+def generate_precision_recall(y_label_list, y_score_lists):
     """
     A system with high recall but low precision returns many results, but most of its predicted labels are incorrect when compared to the training labels. 
     A system with high precision but low recall is just the opposite, returning very few results, but most of its predicted labels are correct when compared to the training labels. 
     An ideal system with high precision and high recall will return many results, with all results labeled correctly.
     """
-    # Prepare input data
-    label_list = []
-    score_list = []
-    for line in y_label_list:
-        temp_list = [item[1] for item in line]
-        label_list.append(temp_list)
-    for line in y_score_list:
-        temp_list = [item[1] for item in line]
-        score_list.append(temp_list)
-    label_array = np.array(label_list)
-    score_array = np.array(score_list)
+    prs = []
+    for y_score_list in y_score_lists:
+        # Prepare input data
+        label_list = []
+        score_list = []
+        for line in y_label_list:
+            temp_list = [item[1] for item in line]
+            label_list.append(temp_list)
+        for line in y_score_list:
+            temp_list = [item[1] for item in line]
+            score_list.append(temp_list)
+        label_array = np.array(label_list)
+        score_array = np.array(score_list)
 
-    average_precision = dict()
-    precision = dict()
-    recall = dict()
-    thresh = dict()
+        average_precision = dict()
+        precision = dict()
+        recall = dict()
+        thresh = dict()
 
-    # Compute micro-average ROC curve and ROC area
-    pr = dict()
-    pr['precision'], pr['recall'], pr['thresh'] = precision_recall_curve(label_array.ravel(), score_array.ravel())
-    pr['avg_precision'] = average_precision_score(label_array, score_array, average="micro")
-    return pr
+        # Compute micro-average ROC curve and ROC area
+        pr = dict()
+        pr['precision'], pr['recall'], pr['thresh'] = precision_recall_curve(label_array.ravel(), score_array.ravel())
+        pr['avg_precision'] = average_precision_score(label_array, score_array, average="micro")
+        prs.append(pr)
+    return prs
 
 
-def generate_roc_curve(y_label_list, y_score_list):
+def generate_roc_curve(y_label_list, y_score_lists):
     """
     ROC curves typically feature true positive rate on the Y axis, and false positive rate on the X axis. 
     This means that the top left corner of the plot is the ideal point - a false positive rate of zero, and a true positive rate of one. 
     This is not very realistic, but it does mean that a larger area under the curve (AUC) is usually better.
     """
-    # Prepare input data
-    label_list = []
-    score_list = []
-    for line in y_label_list:
-        temp_list = [item[1] for item in line]
-        label_list.append(temp_list)
-    for line in y_score_list:
-        temp_list = [item[1] for item in line]
-        score_list.append(temp_list)
-    label_array = np.array(label_list)
-    score_array = np.array(score_list)
+    rocs = []
+    for y_score_list in y_score_lists:
+        # Prepare input data
+        label_list = []
+        score_list = []
+        for line in y_label_list:
+            temp_list = [item[1] for item in line]
+            label_list.append(temp_list)
+        for line in y_score_list:
+            temp_list = [item[1] for item in line]
+            score_list.append(temp_list)
+        label_array = np.array(label_list)
+        score_array = np.array(score_list)
 
-    # Compute micro-average ROC curve and ROC area
-    roc = dict()
-    roc['fpr'], roc['tpr'], roc['thresh'] = roc_curve(label_array.ravel(), score_array.ravel())
-    roc['auc']  = auc(roc['fpr'], roc['tpr'])
-    return roc
+        # Compute micro-average ROC curve and ROC area
+        roc = dict()
+        roc['fpr'], roc['tpr'], roc['thresh'] = roc_curve(label_array.ravel(), score_array.ravel())
+        roc['auc']  = auc(roc['fpr'], roc['tpr'])
+        rocs.append(roc)
+    return rocs
 
 
-def plot_precision_recall(prs, extra_name=None):
+def plot_precision_recall(prs_full, extra_name=None):
     # Setup plot details
     color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
     color_names = [name for name, color in color_dict.items()]
@@ -205,23 +211,24 @@ def plot_precision_recall(prs, extra_name=None):
 
     # Plot Precision-Recall curve
     plt.clf()
-    for index, color in zip(range(len(prs)), colors):
-        pr = prs[index]
-        plt.plot(pr['recall'], pr['precision'], lw=lw, color=color, label='PR curve %d (area = %0.2f)' % (index+1, pr['avg_precision']))
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.ylim([0.0, 1.05])
-    plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall Curve')
-    plt.legend(loc="lower left")
-    plt.grid()
+    for prs in prs_full:
+        for index, color in zip(range(len(prs)), colors):
+            pr = prs[index]
+            plt.plot(pr['recall'], pr['precision'], lw=lw, color=color, label='Threshold %d (area = %0.2f)' % (index+1, pr['avg_precision']))
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+        plt.ylim([0.0, 1.05])
+        plt.xlim([0.0, 1.0])
+        plt.title('Precision-Recall Curve')
+        plt.legend(loc="lower left")
+        plt.grid()
     if extra_name == None:
         plt.show()
     else:
         plt.savefig('./plots/precision_recall_' + extra_name + '.png')
 
 
-def plot_roc_curve(rocs, extra_name=None):
+def plot_roc_curve(rocs_full, extra_name=None):
     # Setup plot details
     color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
     color_names = [name for name, color in color_dict.items()]
@@ -230,17 +237,18 @@ def plot_roc_curve(rocs, extra_name=None):
 
     # Plot Receiver Operating Characteristic curve
     plt.clf()
-    for index, color in zip(range(len(rocs)), colors):
-        roc = rocs[index]
-        plt.plot(roc['fpr'], roc['tpr'], color=color, lw=lw, label='ROC curve %d (area = %0.2f)' % (index+1, roc['auc']))
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic')
-    plt.legend(loc="lower right")
-    plt.grid()
+    for rocs in rocs_full:
+        for index, color in zip(range(len(rocs)), colors):
+            roc = rocs[index]
+            plt.plot(roc['fpr'], roc['tpr'], color=color, lw=lw, label='Threshold %d (area = %0.2f)' % (index+1, roc['auc']))
+        plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver Operating Characteristic')
+        plt.legend(loc="lower right")
+        plt.grid()
     if extra_name == None:
         plt.show()
     else:

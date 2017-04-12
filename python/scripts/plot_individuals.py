@@ -11,6 +11,7 @@ def main():
     """
     Fixing number of hashing functions and varying known_set_size
     """
+    dataset = 'FRGCv1'
     descriptor = 'hog'
     hashing_functions = ['100', '200', '300', '400']
     enclosed_folder = '../files/'
@@ -65,11 +66,12 @@ def main():
             plt.errorbar(x_axis, y_axis, e_axis, label=key, linestyle='-', marker='o')
 
         plt.legend(loc='lower left')
-        plt.title('Variable known individuals: %s %s models' % (descriptor.upper(), function))
-        plt.xlabel('#Known Individuals')
+        plt.title('%s: %s %s models' % (dataset, descriptor.upper(), function))
+        plt.xlabel("% of known Individuals")
         plt.ylabel('AUC')
         plt.xlim([0.0, 100])
         plt.ylim([0.7, 1.05])
+        plt.xticks([10,30,50,70,90])
         plt.grid()
         # plt.show()
         plt.savefig('./individuals' + '_' + descriptor + '_' + function + 
