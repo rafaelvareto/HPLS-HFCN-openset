@@ -27,20 +27,18 @@ def plot_mat_roc_curve(file_name):
 
     prs = []
     plt.clf()
-    counter = 0
     for color,line in zip(colors, plot_data.children):
         if line.type == 'graph2d.lineseries':
             if hasattr(line.properties,'LineStyle'):
                 linestyle = "%s" % line.properties.LineStyle
+                plt.plot(x, y, linestyle='-')
+                prs.append((x, y))
             else:
-                linestyle = '--'
                 marker_size = 1 
-            x = line.properties.XData
-            y = line.properties.YData
-
-            plt.plot(x, y, linestyle=linestyle)
-            prs.append((x,y))
-            counter += 1
+                x = line.properties.XData
+                y = line.properties.YData
+                # plt.plot(x, y, linestyle=linestyle)
+                # print('plot')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
     plt.xlabel('False Positive Rate')
@@ -51,7 +49,7 @@ def plot_mat_roc_curve(file_name):
     plt.savefig('./' + file_name + '.png')
 
     with open('./' + file_name + '.file', 'w') as outfile:
-        pickle.dump([prs,], outfile)
+        pickle.dump([prs,leg_entries], outfile)
 
 
 def main():
