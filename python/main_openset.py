@@ -51,7 +51,7 @@ def main():
         prs.append(pr)
         rocs.append(roc)
 
-        with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+        with open('../files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
             pickle.dump([prs, rocs], outfile)
 
         plot_precision_recall(prs, OUTPUT_NAME)

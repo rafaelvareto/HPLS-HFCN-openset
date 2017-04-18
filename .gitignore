@@ -3,9 +3,9 @@
 *.file
 *.jpg
 *.jpeg
+*.pdf
 *.png
 *.string
-*.txt
 /data/
 
 
