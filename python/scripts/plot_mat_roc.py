@@ -2,6 +2,7 @@ from itertools import cycle
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
 from numpy import size
+import pickle
 from scipy.io import loadmat
 
 # fig_contents = loadmat('1-roc.fig', squeeze_me=True, struct_as_record=False)
@@ -17,37 +18,44 @@ def plot_mat_roc_curve(file_name):
 
     mat_file = loadmat(file_name, squeeze_me=True, struct_as_record=False)
     plot_data = mat_file['hgS_070000'].children
-    # if size(plot_data) > 1:
-    #     legs = plot_data[1]
-    #     leg_entries = tuple(legs.properties.String)
-    #     plot_data = plot_data[0]
-    #     print leg_entries
-    # else:
-    #     legs=0
-    
+    if size(plot_data) > 1:
+        legs = plot_data[1]
+        leg_entries = tuple(legs.properties.String)
+        plot_data = plot_data[0]
+    else:
+        return
 
+    prs = []
     plt.clf()
-    plt.hold(True)
     counter = 0
-    for line in plot_data.children:
-        # line = plot_lines[index]
-        x = line.properties.XData
-        y = line.properties.YData
-        
-        plt.plot(x, y, lw=lw, color=color)
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
+    for color,line in zip(colors, plot_data.children):
+        if line.type == 'graph2d.lineseries':
+            if hasattr(line.properties,'LineStyle'):
+                linestyle = "%s" % line.properties.LineStyle
+            else:
+                linestyle = '--'
+                marker_size = 1 
+            x = line.properties.XData
+            y = line.properties.YData
+
+            plt.plot(x, y, linestyle=linestyle)
+            prs.append((x,y))
+            counter += 1
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall Curve')
-    # plt.legend(loc="lower left")
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic')
+    plt.legend(leg_entries, loc="lower right")
     plt.grid()
-    plt.hold(False)
-    plt.savefig('./plot_mat.png')
+    plt.savefig('./' + file_name + '.png')
+
+    with open('./' + file_name + '.file', 'w') as outfile:
+        pickle.dump([prs,], outfile)
 
 
 def main():
-    file_name='2-roc.fig'
+    file_name='1-roc.fig'
     plot_mat_roc_curve(file_name),
 
 if __name__ == "__main__":
