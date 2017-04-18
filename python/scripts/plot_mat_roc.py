@@ -46,14 +46,14 @@ def plot_mat_roc_curve(file_name):
     plt.title('Receiver Operating Characteristic')
     plt.legend(leg_entries, loc="lower right")
     plt.grid()
-    plt.savefig('./' + file_name + '.png')
+    plt.savefig('./' + file_name + '.pdf')
 
     with open('./' + file_name + '.file', 'w') as outfile:
         pickle.dump([prs,leg_entries], outfile)
 
 
 def main():
-    file_name='1-roc.fig'
+    file_name='cassio-figure5a.fig'
     plot_mat_roc_curve(file_name),
 
 if __name__ == "__main__":
