@@ -89,6 +89,9 @@ def plshface(args):
     for gallery_sample in known_train:
         sample_path = gallery_sample[0]
         sample_name = gallery_sample[1]
+
+        counterA += 1
+        print(counterA, sample_path, sample_name)
         
         gallery_path = PATH + sample_path
         gallery_image = cv.imread(gallery_path, cv.IMREAD_COLOR)
@@ -98,12 +101,10 @@ def plshface(args):
             feature_vector = Descriptor.get_hog(gallery_image)
         elif DESCRIPTOR == 'df':
             feature_vector = Descriptor.get_deep_feature(gallery_image, vgg_model, layer_name='fc6')
+        del gallery_image
     
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
-
-        counterA += 1
-        print(counterA, sample_path, sample_name)
     
     print('>> SPLITTING POSITIVE/NEGATIVE SETS')
     individuals = list(set(matrix_y))
