@@ -9,13 +9,11 @@ import pickle
 from auxiliar import load_txt_file
 from auxiliar import split_known_unknown_sets
 from descriptor import Descriptor
-from vggface import VGGFace
 
-parser = argparse.ArgumentParser(description='Extracting Features for libSVM')
-parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='../frgcv1/')
+parser = argparse.ArgumentParser(description='Feature Extraction')
+parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='../datasets/frgcv1/')
 parser.add_argument('-f', '--file', help='Input file name', required=False, default='train_2_small.txt')
 parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
-parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=5)
 parser.add_argument('-iw', '--width', help='Default image width', required=False, default=128)
 parser.add_argument('-ih', '--height', help='Default image height', required=False, default=144)
 parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)
@@ -27,31 +25,17 @@ def main():
     PATH = str(args.path)
     DATASET = str(args.file)
     DESCRIPTOR = str(args.desc)
-    ITERATIONS = int(args.rept)
     KNOWN_SET_SIZE = float(args.known_set_size)
-    OUTPUT_NAME = 'features_' + DATASET.replace('.txt','') + '_' + DESCRIPTOR + '_' + str(KNOWN_SET_SIZE) + '_' + str(ITERATIONS)
+    OUTPUT_NAME = 'features_' + DATASET.replace('.txt','') + '_' + DESCRIPTOR + '_' + str(KNOWN_SET_SIZE)
 
-    print('EXTRACTING FAETURES')
+    print('EXTRACTING FEATURES')
     dataset_list = load_txt_file(PATH + DATASET)
-    feat_x, feat_y = extract_features(args, dataset_list)
+    feat_z, feat_y, feat_x = extract_features(args, dataset_list)
     
-    for index in range(ITERATIONS):
-        print('ITERATION #%s' % str(index+1))
-        known_tuples, _ = split_known_unknown_sets(dataset_list, known_set_size=KNOWN_SET_SIZE)
-        
-        known_y = [item[1] for item in known_tuples]
-        boolean_y = [1 if item in known_y else 0 for item in feat_y]
-        
-        f = open(OUTPUT_NAME + '_' + str(index+1) + '.string', 'w')
-        for index in range(len(boolean_y)):
-            row_y = str(boolean_y[index])
-            row_x = feat_x[index]
-            f.write(row_y + ' ' + ' '.join(str(x) for x in row_x) + '\n')
-        f.close()
-
-        # with open(OUTPUT_NAME + '.features', 'w') as outfile:
-        #     pickle.dump([feat_x, feat_y], outfile)
-        # print('Done')
+    print('SAVING TO FILE')
+    outmatrix = [feat_z, feat_y, feat_x]
+    with open(OUTPUT_NAME + '.bin', 'wb') as outfile:
+        pickle.dump(outmatrix, outfile, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def extract_features(arguments, dataset_list):
@@ -65,9 +49,11 @@ def extract_features(arguments, dataset_list):
 
     matrix_x = []
     matrix_y = []
+    matrix_z = []
 
     vgg_model = None
     if DESCRIPTOR == 'df':
+        from vggface import VGGFace
         vgg_model = VGGFace()
 
     counterA = 0
@@ -86,11 +72,12 @@ def extract_features(arguments, dataset_list):
 
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
+        matrix_z.append(sample_path)
         
         counterA += 1
         print(counterA, sample_path, sample_name)
 
-    return matrix_x, matrix_y
+    return matrix_z, matrix_y, matrix_x
 
 
 if __name__ == "__main__":
