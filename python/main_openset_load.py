@@ -21,7 +21,7 @@ from pls_classifier import PLSClassifier
 
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
-parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-1-DEEP-FEATURE-VECTORS.bin')
+parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-X-HOG-VECTORS.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)
@@ -39,20 +39,22 @@ def main():
 
     prs = []
     rocs = []
-    for index in range(ITERATIONS):
-        print('ITERATION #%s' % str(index+1))
-        pr, roc = plshface(args)
-        prs.append(pr)
-        rocs.append(roc)
 
-        with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
-            pickle.dump([prs, rocs], outfile)
+    with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
+        for index in range(ITERATIONS):
+            print('ITERATION #%s' % str(index+1))
+            pr, roc = plshface(args, parallel_pool)
+            prs.append(pr)
+            rocs.append(roc)
 
-        plot_precision_recall(prs, OUTPUT_NAME)
-        plot_roc_curve(rocs, OUTPUT_NAME)
+            with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+                pickle.dump([prs, rocs], outfile)
+
+            plot_precision_recall(prs, OUTPUT_NAME)
+            plot_roc_curve(rocs, OUTPUT_NAME)
     
 
-def plshface(args):
+def plshface(args, parallel_pool):
     PATH = str(args.path)
     DATASET = str(args.file)
     NUM_HASH = int(args.hash)
@@ -96,11 +98,10 @@ def plshface(args):
         splits.append(generate_pos_neg_dict(individuals))
 
     print('>> LEARNING PLS MODELS:')
-    input_list = itertools.izip(splits, itertools.repeat((matrix_x, matrix_y)))
     numpy_x = np.array(matrix_x)
     numpy_y = np.array(matrix_y)
     numpy_s = np.array(splits)
-    models = Parallel(n_jobs=-2, verbose=11, backend='multiprocessing')(
+    models = parallel_pool(
         delayed(learn_plsh_model) (numpy_x, numpy_y, split) for split in numpy_s
     )
   
@@ -170,6 +171,11 @@ def plshface(args):
 
     # cmc_score_norm = np.divide(cmc_score, counterA)
     # generate_cmc_curve(cmc_score_norm, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)
+
+    del models[:]
+    del list_of_paths[:]
+    del list_of_labels[:]
+    del list_of_features[:]
     
     pr = generate_precision_recall(plotting_labels, plotting_scores)
     roc = generate_roc_curve(plotting_labels, plotting_scores)
