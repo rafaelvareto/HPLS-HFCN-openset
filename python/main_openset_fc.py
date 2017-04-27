@@ -56,7 +56,7 @@ def main():
             prs.append(pr)
             rocs.append(roc)
 
-            with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+            with open('../files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
                 pickle.dump([prs, rocs], outfile)
 
             plot_precision_recall(prs, OUTPUT_NAME)
@@ -70,7 +70,7 @@ def getModel(input_shape,nclasses=2):
     model.add(Dropout(0.2))
     model.add(Dense(nclasses, activation='softmax'))
 
-    model.summary()
+    #model.summary()
     model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])#RMSprop()
 
     return model
@@ -150,7 +150,7 @@ def plshface(args, parallel_pool):
             pos_list = [key for key, value in models[k][1].iteritems() if value == 1]
             pred = models[k][0].predict(feature_vector.reshape(1, feature_vector.shape[0]))
             response = pred[0][1]
-            print(response)
+            #print(response)
             for pos in pos_list:
                 vote_dict[pos] += response
         result = vote_dict.items()
