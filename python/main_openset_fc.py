@@ -71,7 +71,7 @@ def getModel(input_shape,nclasses=2):
     model.add(Dense(nclasses, activation='softmax'))
 
     model.summary()
-    model.compile(loss='categorical_crossentropy', optimizer=RMSprop(), metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])#RMSprop()
 
     return model
 
@@ -80,7 +80,7 @@ def learn_fc_model(X, Y, split):
     y_train = np_utils.to_categorical(boolean_label, 2)
     model = getModel(input_shape=X[0].shape)
 
-    model.fit(X, y_train, batch_size=20, nb_epoch=200, verbose=1)
+    model.fit(X, y_train, batch_size=40, nb_epoch=100, verbose=0)
 
     return (model, split)
 
@@ -126,7 +126,7 @@ def plshface(args, parallel_pool):
     print('>> SPLITTING POSITIVE/NEGATIVE SETS')
     individuals = list(set(matrix_y))
     cmc_score = np.zeros(len(individuals))
-    for index in range(0, 10): # NUM_HASH):
+    for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))
 
     print('>> LEARNING FC MODELS:')
@@ -150,6 +150,7 @@ def plshface(args, parallel_pool):
             pos_list = [key for key, value in models[k][1].iteritems() if value == 1]
             pred = models[k][0].predict(feature_vector.reshape(1, feature_vector.shape[0]))
             response = pred[0][1]
+            print(response)
             for pos in pos_list:
                 vote_dict[pos] += response
         result = vote_dict.items()
@@ -160,7 +161,7 @@ def plshface(args, parallel_pool):
                 if result[inner][0] == sample_name:
                     cmc_score[outer] += 1
                     break
-        
+
         counterB += 1
         denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
         if denominator > 0:
