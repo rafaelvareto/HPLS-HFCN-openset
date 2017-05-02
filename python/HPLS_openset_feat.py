@@ -18,7 +18,6 @@ from descriptor import Descriptor
 from joblib import Parallel, delayed
 from matplotlib import pyplot
 from pls_classifier import PLSClassifier
-from vggface import VGGFace
 
 
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition')
@@ -45,20 +44,21 @@ def main():
 
     prs = []
     rocs = []
-    for index in range(ITERATIONS):
-        print('ITERATION #%s' % str(index+1))
-        pr, roc = plshface(args)
-        prs.append(pr)
-        rocs.append(roc)
+    with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
+        for index in range(ITERATIONS):
+            print('ITERATION #%s' % str(index+1))
+            pr, roc = plshface(args, parallel_pool)
+            prs.append(pr)
+            rocs.append(roc)
 
-        with open('../files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
-            pickle.dump([prs, rocs], outfile)
+            with open('../files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+                pickle.dump([prs, rocs], outfile)
 
-        plot_precision_recall(prs, OUTPUT_NAME)
-        plot_roc_curve(rocs, OUTPUT_NAME)
+            plot_precision_recall(prs, OUTPUT_NAME)
+            plot_roc_curve(rocs, OUTPUT_NAME)
     
 
-def plshface(args):
+def plshface(args, parallel_pool):
     PATH = str(args.path)
     DATASET = str(args.file)
     DESCRIPTOR = str(args.desc)
@@ -77,6 +77,7 @@ def plshface(args):
 
     vgg_model = None
     if DESCRIPTOR == 'df':
+        from vggface import VGGFace
         vgg_model = VGGFace()
     
     print('>> EXPLORING DATASET')
@@ -117,7 +118,7 @@ def plshface(args):
     numpy_x = np.array(matrix_x)
     numpy_y = np.array(matrix_y)
     numpy_s = np.array(splits)
-    models = Parallel(n_jobs=-2, verbose=11, backend='multiprocessing')(
+    models = parallel_pool(
         delayed(learn_plsh_model) (numpy_x, numpy_y, split) for split in numpy_s
     )
   
