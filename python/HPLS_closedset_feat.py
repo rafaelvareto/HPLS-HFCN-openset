@@ -41,7 +41,8 @@ def main():
     NUM_HASH = int(args.hash)
     TRAIN_SET_SIZE = float(args.train_set_size)
 
-    OUTPUT_NAME = DATASET.replace('.txt','') + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+    DATASET = DATASET.replace('.txt','')
+    OUTPUT_NAME = 'PLSH_' + DATASET + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
     cmc_values = []
     for index in range(ITERATIONS):
@@ -49,10 +50,10 @@ def main():
         cmc = plshface(args)
         cmc_values.append(cmc)
 
-        with open('./files/CS_plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+        with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
             pickle.dump([cmc_values], outfile)
 
-        generate_cmc_curve(cmc_values, 'CS_plot_' + OUTPUT_NAME)
+        generate_cmc_curve(cmc_values, OUTPUT_NAME)
     
 
 def plshface(args):
