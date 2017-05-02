@@ -136,7 +136,7 @@ def generate_cmc_curve(cmc_scores, extra_name):
     plt.xlabel('Rank')
     plt.ylabel('Accuracy Rate')
     plt.title('Cumulative Matching Characteristic')
-    plt.savefig('plots/cmc_curve_' + extra_name + '.png')
+    plt.savefig('plots/CMC_' + extra_name + '.png')
     # plt.show()
 
 
@@ -217,7 +217,7 @@ def plot_precision_recall(prs, extra_name=None):
     if extra_name == None:
         plt.show()
     else:
-        plt.savefig('./plots/precision_recall_' + extra_name + '.pdf')
+        plt.savefig('./plots/PR_' + extra_name + '.pdf')
 
 
 def plot_roc_curve(rocs, extra_name=None):
@@ -243,4 +243,4 @@ def plot_roc_curve(rocs, extra_name=None):
     if extra_name == None:
         plt.show()
     else:
-        plt.savefig('./plots/roc_curve_' + extra_name + '.pdf')
+        plt.savefig('./plots/ROC_' + extra_name + '.pdf')

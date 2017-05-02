@@ -34,12 +34,14 @@ def main():
     DATASET = str(args.file)
     ITERATIONS = int(args.rept)
     KNOWN_SET_SIZE = float(args.known_set_size)
+    TRAIN_SET_SIZE = float(args.train_set_size)
     NUM_HASH = int(args.hash)
-    OUTPUT_NAME = DATASET.replace('.bin','') + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(ITERATIONS)
+    
+    DATASET = DATASET.replace('-FEATURE-VECTORS.bin','')
+    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
     prs = []
     rocs = []
-
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
@@ -47,7 +49,7 @@ def main():
             prs.append(pr)
             rocs.append(roc)
 
-            with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+            with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
                 pickle.dump([prs, rocs], outfile)
 
             plot_precision_recall(prs, OUTPUT_NAME)
