@@ -13,6 +13,7 @@ from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
+from sklearn.svm import SVC
 
 
 def load_txt_file(file_name):
@@ -94,6 +95,7 @@ def generate_pos_neg_dict(labels):
     full_dict = dict((key, val) for key, val in full_set)
     return full_dict
 
+
 def split_into_chunks(full_list, num_chunks):
     split_list = []
     chunk_size = int(len(full_list) / num_chunks) + 1
@@ -104,6 +106,13 @@ def split_into_chunks(full_list, num_chunks):
     
 def learn_plsh_model(matrix_x, matrix_y, split):
     classifier = PLSClassifier()
+    boolean_label = [split[key] for key in matrix_y]
+    model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
+    return (model, split)
+
+
+def learn_svmh_model(matrix_x, matrix_y, split):
+    classifier = SVC(decision_function_shape='ovr',kernel='rbf',probability=True)
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
     return (model, split)

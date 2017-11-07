@@ -11,7 +11,7 @@ from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
-from auxiliar import learn_plsh_model
+from auxiliar import learn_svmh_model
 from auxiliar import load_txt_file
 from auxiliar import split_known_unknown_sets, split_train_test_sets
 from joblib import Parallel, delayed
@@ -38,14 +38,14 @@ def main():
     NUM_HASH = int(args.hash)
     
     DATASET = DATASET.replace('-FEATURE-VECTORS.bin','')
-    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+    OUTPUT_NAME = 'HSVM_' + DATASET + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
     prs = []
     rocs = []
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            pr, roc = plshface(args, parallel_pool)
+            pr, roc = svmhface(args, parallel_pool)
             prs.append(pr)
             rocs.append(roc)
 
@@ -56,7 +56,7 @@ def main():
             plot_roc_curve(rocs, OUTPUT_NAME)
     
 
-def plshface(args, parallel_pool):
+def svmhface(args, parallel_pool):
     PATH = str(args.path)
     DATASET = str(args.file)
     NUM_HASH = int(args.hash)
@@ -99,12 +99,12 @@ def plshface(args, parallel_pool):
     for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))
 
-    print('>> LEARNING PLS MODELS:')
+    print('>> LEARNING SVM MODELS:')
     numpy_x = np.array(matrix_x)
     numpy_y = np.array(matrix_y)
     numpy_s = np.array(splits)
     models = parallel_pool(
-        delayed(learn_plsh_model) (numpy_x, numpy_y, split) for split in numpy_s
+        delayed(learn_svmh_model) (numpy_x, numpy_y, split) for split in numpy_s
     )
   
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
@@ -118,7 +118,7 @@ def plshface(args, parallel_pool):
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
             pos_list = [key for key, value in model[1].iteritems() if value == 1]
-            response = model[0].predict_confidence(feature_vector)
+            response = model[0].predict_proba([feature_vector])[0][-1]
             for pos in pos_list:
                 vote_dict[pos] += response
         result = vote_dict.items()
@@ -153,7 +153,7 @@ def plshface(args, parallel_pool):
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
             pos_list = [key for key, value in model[1].iteritems() if value == 1]
-            response = model[0].predict_confidence(feature_vector)
+            response = model[0].predict_proba([feature_vector])[0][-1]
             for pos in pos_list:
                 vote_dict[pos] += response
         result = vote_dict.items()
