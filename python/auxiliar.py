@@ -217,13 +217,13 @@ def plot_precision_recall(prs, extra_name=None):
     avgs = []
     for index, color in zip(range(len(prs)), colors):
         pr = prs[index]
-        plt.plot(pr['recall'], pr['precision'], lw=lw, color=color, label='PR curve %d (area = %0.2f)' % (index+1, pr['avg_precision']))
+        plt.plot(pr['recall'], pr['precision'], lw=lw, color=color, label='PR curve %d (area = %0.3f)' % (index+1, pr['avg_precision']))
         avgs.append(pr['avg_precision'])
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall Curve (%0.2f - %0.2f)' % (np.mean(avgs),np.std(avgs)))
+    plt.title('Precision-Recall Curve (%0.3f - %0.3f)' % (np.mean(avgs),np.std(avgs)))
     plt.legend(loc="lower left")
     plt.grid()
     if extra_name == None:
@@ -244,14 +244,14 @@ def plot_roc_curve(rocs, extra_name=None):
     aucs = []
     for index, color in zip(range(len(rocs)), colors):
         roc = rocs[index]
-        plt.plot(roc['fpr'], roc['tpr'], color=color, lw=lw, label='ROC curve %d (area = %0.2f)' % (index+1, roc['auc']))
+        plt.plot(roc['fpr'], roc['tpr'], color=color, lw=lw, label='ROC curve %d (area = %0.3f)' % (index+1, roc['auc']))
         aucs.append(roc['auc'])
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic (%0.2f - %0.2f)' % (np.mean(aucs),np.std(aucs)))
+    plt.title('Receiver Operating Characteristic (%0.3f - %0.3f)' % (np.mean(aucs),np.std(aucs)))
     plt.legend(loc="lower right")
     plt.grid()
     if extra_name == None:
