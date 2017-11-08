@@ -13,6 +13,8 @@ from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
+from sklearn.svm import SVC
+from sklearn.svm import SVR
 
 
 def load_txt_file(file_name):
@@ -94,6 +96,7 @@ def generate_pos_neg_dict(labels):
     full_dict = dict((key, val) for key, val in full_set)
     return full_dict
 
+
 def split_into_chunks(full_list, num_chunks):
     split_list = []
     chunk_size = int(len(full_list) / num_chunks) + 1
@@ -104,6 +107,13 @@ def split_into_chunks(full_list, num_chunks):
     
 def learn_plsh_model(matrix_x, matrix_y, split):
     classifier = PLSClassifier()
+    boolean_label = [split[key] for key in matrix_y]
+    model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
+    return (model, split)
+
+
+def learn_svmh_model(matrix_x, matrix_y, split):
+    classifier = SVR(C=1.0,kernel='linear')
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
     return (model, split)
@@ -142,7 +152,7 @@ def generate_cmc_curve(cmc_scores, extra_name):
 
 def generate_precision_recall(y_label_list, y_score_list):
     """
-    A system with high recall but low precision returns many results, but most of its predicted labels are incorrect when compared to the training labels. 
+    A system with high recall but low precision returns many resaucsults, but most of its predicted labels are incorrect when compared to the training labels. 
     A system with high precision but low recall is just the opposite, returning very few results, but most of its predicted labels are correct when compared to the training labels. 
     An ideal system with high precision and high recall will return many results, with all results labeled correctly.
     """
@@ -204,14 +214,16 @@ def plot_precision_recall(prs, extra_name=None):
 
     # Plot Precision-Recall curve
     plt.clf()
+    avgs = []
     for index, color in zip(range(len(prs)), colors):
         pr = prs[index]
-        plt.plot(pr['recall'], pr['precision'], lw=lw, color=color, label='PR curve %d (area = %0.2f)' % (index+1, pr['avg_precision']))
+        plt.plot(pr['recall'], pr['precision'], lw=lw, color=color, label='PR curve %d (area = %0.3f)' % (index+1, pr['avg_precision']))
+        avgs.append(pr['avg_precision'])
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall Curve')
+    plt.title('Precision-Recall Curve (%0.3f - %0.3f)' % (np.mean(avgs),np.std(avgs)))
     plt.legend(loc="lower left")
     plt.grid()
     if extra_name == None:
@@ -229,15 +241,17 @@ def plot_roc_curve(rocs, extra_name=None):
 
     # Plot Receiver Operating Characteristic curve
     plt.clf()
+    aucs = []
     for index, color in zip(range(len(rocs)), colors):
         roc = rocs[index]
-        plt.plot(roc['fpr'], roc['tpr'], color=color, lw=lw, label='ROC curve %d (area = %0.2f)' % (index+1, roc['auc']))
+        plt.plot(roc['fpr'], roc['tpr'], color=color, lw=lw, label='ROC curve %d (area = %0.3f)' % (index+1, roc['auc']))
+        aucs.append(roc['auc'])
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic')
+    plt.title('Receiver Operating Characteristic (%0.3f - %0.3f)' % (np.mean(aucs),np.std(aucs)))
     plt.legend(loc="lower right")
     plt.grid()
     if extra_name == None:
