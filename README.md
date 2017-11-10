@@ -86,6 +86,7 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 
 In addition to OpenCV, the following Python libraries are required in order to execute our full pipeline:
 ```bash
+* pip install cerberus
 * pip install h5py
 * pip install joblib
 * pip install matplotlib
@@ -93,6 +94,7 @@ In addition to OpenCV, the following Python libraries are required in order to e
 * pip install pillow
 * pip install scikit-learn
 * pip install scipy
+* pip install sympy
 
 * pip install tensorflow
 * pip install theano
