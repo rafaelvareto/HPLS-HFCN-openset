@@ -32,14 +32,6 @@ To clone this repository, simply enter the following command in your terminal:
 git clone https://github.com/rafaelvareto/HPLS-HFCN-openset.git
 ```
 
-In order to reproduce the experiments, you need to either download the utilized datasets (FRGCv1, PubFig83 and VGGFace) and extract their corresponding feature vector or download the disclosed features:
-* Face Recognition Grand Challenge [[exp1](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-1-DEEP.bin)] [[exp2](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-2-DEEP.bin)] [[exp4](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-4-DEEP.bin)]
-* Public Figures 83 [[dev](http://homepages.dcc.ufmg.br/~rafaelvareto/features/PUBFIG-DEV-DEEP.bin)] [[eval](http://homepages.dcc.ufmg.br/~rafaelvareto/features/PUBFIG-EVAL-DEEP.bin)]
-* VGGFace Dataset [[vgg](http://homepages.dcc.ufmg.br/~rafaelvareto/features/VGGFACE-15-DEEP.bin)] [[hog](http://homepages.dcc.ufmg.br/~rafaelvareto/features/VGGFACE-15-HOG.bin)]
-
-Note that the complete [VGGFace dataset](http://www.robots.ox.ac.uk/~vgg/data/vgg_face/) contains 2,622 identities. In out experiments, we only utilize 1,000 subject identities holding 15 face samples each.
-
-
 ### Installation Process
 
 The method described herein was desgined and evaluated on a linux-based machine with [Python 2.7.6](https://www.python.org/) and [OpenCV 3.1.0](https://github.com/Itseez/opencv.git).
@@ -67,7 +59,7 @@ sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev libdc1394-22-
 
 Python development libraries:
 ```bash
-sudo apt-get install python-dev libpython-all-dev
+sudo apt-get install python-dev libpython-all-dev libtbb-dev
 ```
 
 Now you can clone OpenCV repository before installing it on your system:
@@ -92,9 +84,9 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D BUILD_EXAMPLES=ON ..
 ```
 
-
 In addition to OpenCV, the following Python libraries are required in order to execute our full pipeline:
 ```bash
+* pip install cerberus
 * pip install h5py
 * pip install joblib
 * pip install matplotlib
@@ -102,11 +94,23 @@ In addition to OpenCV, the following Python libraries are required in order to e
 * pip install pillow
 * pip install scikit-learn
 * pip install scipy
+* pip install sympy
 
 * pip install tensorflow
 * pip install theano
 * pip install keras
 ```
+
+
+### Datasets
+In order to reproduce the experiments, you need to either download the utilized datasets (FRGCv1, PubFig83 and VGGFace) and extract their corresponding feature vectors or download their disclosed feature files:
+* Face Recognition Grand Challenge [[exp1](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-1-DEEP.bin)] [[exp2](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-2-DEEP.bin)] [[exp4](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-4-DEEP.bin)]
+* Public Figures 83 [[dev](http://homepages.dcc.ufmg.br/~rafaelvareto/features/PUBFIG-DEV-DEEP.bin)] [[eval](http://homepages.dcc.ufmg.br/~rafaelvareto/features/PUBFIG-EVAL-DEEP.bin)]
+* VGGFace Dataset [[vgg](http://homepages.dcc.ufmg.br/~rafaelvareto/features/VGGFACE-15-DEEP.bin)] [[hog](http://homepages.dcc.ufmg.br/~rafaelvareto/features/VGGFACE-15-HOG.bin)]
+
+Note that the complete [VGGFace dataset](http://www.robots.ox.ac.uk/~vgg/data/vgg_face/) contains 2,622 identities. 
+In our experiments, we only utilize 1,000 subject identities holding 15 face samples each.
+
 
 ### Deployment Process
 The python folder contains all the code employed in the experiments detailed in our [IJCB conference paper](http://homepages.dcc.ufmg.br/~william/papers/paper_2017_IJCB.pdf).
@@ -135,7 +139,7 @@ with open(file_name, 'rb') as infile:
 
 Folder *libsvm* and *scripts* hold all the necessary files for running one of the basilines: one-class LIBSVM.
 
-Suppose you have installed all the necessary Python requirements and downloaded all necessary *.bin*-feature files.
+Suppose you have installed all the necessary Python requirements and downloaded all necessary *.bin*-feature dataset files.
 Assuming that you are on this repository's *python* folder and the feature files are stored in the *python/features*, you can run the developed methods by simply typing the following command in terminal:
 ```bash
 python HPLS_openset_load.py -p ./features/ -f FRGC-SET-4-DEEP.bin -r 10 -m 10 -ks 0.1 -ts 0.5
