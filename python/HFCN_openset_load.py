@@ -39,7 +39,35 @@ parser.add_argument('-ts', '--train_set_size', help='Default size of training su
 args = parser.parse_args()
 
 
+import types
+import tempfile
+import keras.models
+
+def make_keras_picklable():
+    def __getstate__(self):
+        model_str = ""
+        with tempfile.NamedTemporaryFile(suffix='.hdf5', delete=False) as fd:
+            keras.models.save_model(self, fd.name, overwrite=True)
+            model_str = fd.read()
+        d = { 'model_str': model_str }
+        return d
+
+    def __setstate__(self, state):
+        with tempfile.NamedTemporaryFile(suffix='.hdf5', delete=False) as fd:
+            fd.write(state['model_str'])
+            fd.flush()
+            model = keras.models.load_model(fd.name)
+        self.__dict__ = model.__dict__
+
+
+    cls = keras.models.Model
+    cls.__getstate__ = __getstate__
+    cls.__setstate__ = __setstate__
+
+
 def getModel(input_shape,nclasses=2):
+    make_keras_picklable()
+    
     model = Sequential()
     model.add(Dense(64, activation='relu', input_shape=input_shape))
     model.add(Dropout(0.2))
@@ -72,14 +100,14 @@ def main():
     prs = []
     rocs = []
     times = []
-    with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
+    with Parallel(n_jobs=4, verbose=15, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
             start_time = time.time()
             pr, roc = fcnhface(args, parallel_pool)
             end_time = time.time()
             
-            abs_time = (end_time - start_time) / 10
+            abs_time = (end_time - start_time)
             prs.append(pr)
             rocs.append(roc)
             times.append(abs_time)
@@ -146,7 +174,11 @@ def fcnhface(args, parallel_pool):
     numpy_y = np.array(matrix_y)
     numpy_s = np.array(splits)
 
-    models = [learn_fc_model(numpy_x, numpy_y, split) for split in numpy_s]
+    # models = [learn_fc_model(numpy_x, numpy_y, split) for split in numpy_s]
+
+    models = parallel_pool(
+        delayed(learn_fc_model) (numpy_x, numpy_y, split) for split in numpy_s
+    )
 
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
@@ -157,7 +189,6 @@ def fcnhface(args, parallel_pool):
         feature_vector = np.array(list_of_features[sample_index])
 
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
-        #print (vote_dict)
         for k in range (0, len(models)):
             pos_list = [key for key, value in models[k][1].iteritems() if value == 1]
             pred = models[k][0].predict(feature_vector.reshape(1, feature_vector.shape[0]))
