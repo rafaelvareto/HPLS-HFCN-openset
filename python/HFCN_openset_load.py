@@ -5,20 +5,21 @@ import cv2 as cv
 import itertools
 import matplotlib
 import numpy as np
+import os
 import pickle
+import time
 
 matplotlib.use('Agg')
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
-from auxiliar import learn_plsh_model
 from auxiliar import load_txt_file
 from auxiliar import split_known_unknown_sets, split_train_test_sets
 from joblib import Parallel, delayed
 from matplotlib import pyplot
-from pls_classifier import PLSClassifier
 
 import keras
 from keras.datasets import mnist
@@ -38,33 +39,7 @@ parser.add_argument('-ts', '--train_set_size', help='Default size of training su
 args = parser.parse_args()
 
 
-def main():
-    PATH = str(args.path)
-    DATASET = str(args.file)
-    ITERATIONS = int(args.rept)
-    KNOWN_SET_SIZE = float(args.known_set_size)
-    NUM_HASH = int(args.hash)
-    OUTPUT_NAME = DATASET.replace('.bin','') + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(ITERATIONS)
-
-    prs = []
-    rocs = []
-
-    with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
-        for index in range(ITERATIONS):
-            print('ITERATION #%s' % str(index+1))
-            pr, roc = plshface(args, parallel_pool)
-            prs.append(pr)
-            rocs.append(roc)
-
-            with open('../files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
-                pickle.dump([prs, rocs], outfile)
-
-            plot_precision_recall(prs, OUTPUT_NAME)
-            plot_roc_curve(rocs, OUTPUT_NAME)
-    
-
 def getModel(input_shape,nclasses=2):
-
     model = Sequential()
     model.add(Dense(64, activation='relu', input_shape=input_shape))
     model.add(Dropout(0.2))
@@ -74,6 +49,7 @@ def getModel(input_shape,nclasses=2):
     model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])#RMSprop()
 
     return model
+
 
 def learn_fc_model(X, Y, split):
     boolean_label = [(split[key]+1)/2 for key in Y]
@@ -85,7 +61,43 @@ def learn_fc_model(X, Y, split):
     return (model, split)
 
 
-def plshface(args, parallel_pool):
+def main():
+    PATH = str(args.path)
+    DATASET = str(args.file)
+    ITERATIONS = int(args.rept)
+    KNOWN_SET_SIZE = float(args.known_set_size)
+    NUM_HASH = int(args.hash)
+    OUTPUT_NAME = 'HFCN_' + str(args.file) + '_' + str(args.hash) + '_' + str(args.known_set_size) + '_' + str(args.rept)
+
+    prs = []
+    rocs = []
+    times = []
+    with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
+        for index in range(ITERATIONS):
+            print('ITERATION #%s' % str(index+1))
+            start_time = time.time()
+            pr, roc = fcnhface(args, parallel_pool)
+            end_time = time.time()
+            
+            abs_time = (end_time - start_time) / 10
+            prs.append(pr)
+            rocs.append(roc)
+            times.append(abs_time)
+
+            plot_precision_recall(prs, OUTPUT_NAME)
+            plot_roc_curve(rocs, OUTPUT_NAME)
+
+            with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+                pickle.dump([prs, rocs], outfile)
+            with open('./times/' + OUTPUT_NAME + '.time', 'a') as outtime:
+                outtime.write(str(abs_time) + '\n')
+        with open('./times/' + OUTPUT_NAME + '.time', 'a') as outtime:
+            outtime.write('------\n')
+            outtime.write(str(np.mean(times)) + '\n')
+            outtime.write(str(np.std(times)) + '\n')
+
+
+def fcnhface(args, parallel_pool):
     PATH = str(args.path)
     DATASET = str(args.file)
     NUM_HASH = int(args.hash)
