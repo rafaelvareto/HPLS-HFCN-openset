@@ -22,12 +22,16 @@ from joblib import Parallel, delayed
 from matplotlib import pyplot
 
 import keras
-from keras.datasets import mnist
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.optimizers import RMSprop
-from keras.utils import np_utils
-from keras import callbacks
+import keras.models
+import keras.backend.tensorflow_backend as keras_backend
+from keras.models import Sequential as keras_sequential
+from keras.layers import Dense as keras_dense 
+from keras.layers import Dropout as keras_dropout
+from keras.utils import np_utils as keras_np_utils
+import tensorflow
+
+import types
+import tempfile
 
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
@@ -38,10 +42,6 @@ parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled su
 parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
 args = parser.parse_args()
 
-
-import types
-import tempfile
-import keras.models
 
 def make_keras_picklable():
     def __getstate__(self):
@@ -67,10 +67,10 @@ def make_keras_picklable():
 def getModel(input_shape,nclasses=2):
     make_keras_picklable()
     
-    model = Sequential()
-    model.add(Dense(64, activation='relu', input_shape=input_shape))
-    model.add(Dropout(0.2))
-    model.add(Dense(nclasses, activation='softmax'))
+    model = keras_sequential()
+    model.add(keras_dense(64, activation='relu', input_shape=input_shape))
+    model.add(keras_dropout(0.2))
+    model.add(keras_dense(nclasses, activation='softmax'))
 
     #model.summary()
     model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])#RMSprop()
@@ -80,7 +80,7 @@ def getModel(input_shape,nclasses=2):
 
 def learn_fc_model(X, Y, split):
     boolean_label = [(split[key]+1)/2 for key in Y]
-    y_train = np_utils.to_categorical(boolean_label, 2)
+    y_train = keras_np_utils.to_categorical(boolean_label, 2)
     model = getModel(input_shape=X[0].shape)
 
     model.fit(X, y_train, batch_size=40, nb_epoch=100, verbose=0)
@@ -99,8 +99,12 @@ def main():
     prs = []
     rocs = []
     times = []
-    with Parallel(n_jobs=4, verbose=15, backend='multiprocessing') as parallel_pool:
+    with Parallel(n_jobs=1, verbose=15, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
+            keras_backend.clear_session()
+            keras_session = tensorflow.Session()
+            keras_backend.set_session(keras_session)
+
             print('ITERATION #%s' % str(index+1))
             start_time = time.time()
             pr, roc = fcnhface(args, parallel_pool)
