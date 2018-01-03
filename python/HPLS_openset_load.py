@@ -22,12 +22,12 @@ from pls_classifier import PLSClassifier
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-4-DEEP-FEATURE-VECTORS.bin')
-parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
-parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=10)
-parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)
-parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
+parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1, type=int)
+parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=10, type=int)
+parser.add_argument('-t', '--trunk', help='Trunk response values to a given digit', required=False, default=0.0, type=float)
+parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5, type=float)
+parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5, type=float)
 args = parser.parse_args()
-
 
 def main():
     PATH = str(args.path)
@@ -36,9 +36,10 @@ def main():
     KNOWN_SET_SIZE = float(args.known_set_size)
     TRAIN_SET_SIZE = float(args.train_set_size)
     NUM_HASH = int(args.hash)
+    TRUNK_VALUE = float(args.trunk)
     
     DATASET = DATASET.replace('-FEATURE-VECTORS.bin','')
-    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(ITERATIONS) + '_' + str(NUM_HASH) + '_' + str(TRUNK_VALUE) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE)
 
     prs = []
     rocs = []
@@ -51,8 +52,7 @@ def main():
 
             with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
                 pickle.dump([prs, rocs], outfile)
-
-            plot_precision_recall(prs, OUTPUT_NAME)
+            # plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
     
 
@@ -62,10 +62,18 @@ def plshface(args, parallel_pool):
     NUM_HASH = int(args.hash)
     KNOWN_SET_SIZE = float(args.known_set_size)
     TRAIN_SET_SIZE = float(args.train_set_size)
+    TRUNK_VALUE = float(args.trunk)
 
     print('>> LOADING FEATURES FROM FILE')
     with open(PATH + DATASET, 'rb') as input_file:
         list_of_paths, list_of_labels, list_of_features = pickle.load(input_file)
+    
+    if TRUNK_VALUE == 0.0:
+        trunking = lambda resp: resp
+        print('>> NO TRUNKING!')
+    else:
+        trunking = lambda resp: TRUNK_VALUE if resp > TRUNK_VALUE else -TRUNK_VALUE if resp < -TRUNK_VALUE else resp
+        print('DEFINITELY TRUNKING!')
 
     matrix_x = []
     matrix_y = []
@@ -120,7 +128,7 @@ def plshface(args, parallel_pool):
             pos_list = [key for key, value in model[1].iteritems() if value == 1]
             response = model[0].predict_confidence(feature_vector)
             for pos in pos_list:
-                vote_dict[pos] += response
+                vote_dict[pos] += trunking(response)
         result = vote_dict.items()
         result.sort(key=lambda tup: tup[1], reverse=True)
 
@@ -155,7 +163,7 @@ def plshface(args, parallel_pool):
             pos_list = [key for key, value in model[1].iteritems() if value == 1]
             response = model[0].predict_confidence(feature_vector)
             for pos in pos_list:
-                vote_dict[pos] += response
+                vote_dict[pos] += trunking(response)
         result = vote_dict.items()
         result.sort(key=lambda tup: tup[1], reverse=True)
 
