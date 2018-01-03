@@ -5,28 +5,33 @@ import cv2 as cv
 import itertools
 import matplotlib
 import numpy as np
+import os
 import pickle
+import time
 
 matplotlib.use('Agg')
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
-from auxiliar import learn_plsh_model
 from auxiliar import load_txt_file
 from auxiliar import split_known_unknown_sets, split_train_test_sets
 from joblib import Parallel, delayed
 from matplotlib import pyplot
-from pls_classifier import PLSClassifier
 
 import keras
-from keras.datasets import mnist
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.optimizers import RMSprop
-from keras.utils import np_utils
-from keras import callbacks
+import keras.models
+import keras.backend.tensorflow_backend as keras_backend
+from keras.models import Sequential as keras_sequential
+from keras.layers import Dense as keras_dense 
+from keras.layers import Dropout as keras_dropout
+from keras.utils import np_utils as keras_np_utils
+import tensorflow
+
+import types
+import tempfile
 
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
@@ -38,46 +43,44 @@ parser.add_argument('-ts', '--train_set_size', help='Default size of training su
 args = parser.parse_args()
 
 
-def main():
-    PATH = str(args.path)
-    DATASET = str(args.file)
-    ITERATIONS = int(args.rept)
-    KNOWN_SET_SIZE = float(args.known_set_size)
-    NUM_HASH = int(args.hash)
-    OUTPUT_NAME = DATASET.replace('.bin','') + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(ITERATIONS)
+def make_keras_picklable():
+    def __getstate__(self):
+        model_str = ""
+        with tempfile.NamedTemporaryFile(suffix='.hdf5', delete=True) as fd:
+            keras.models.save_model(self, fd.name, overwrite=True)
+            model_str = fd.read()
+        d = { 'model_str': model_str }
+        return d
 
-    prs = []
-    rocs = []
+    def __setstate__(self, state):
+        with tempfile.NamedTemporaryFile(suffix='.hdf5', delete=True) as fd:
+            fd.write(state['model_str'])
+            fd.flush()
+            model = keras.models.load_model(fd.name)
+        self.__dict__ = model.__dict__
 
-    with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
-        for index in range(ITERATIONS):
-            print('ITERATION #%s' % str(index+1))
-            pr, roc = plshface(args, parallel_pool)
-            prs.append(pr)
-            rocs.append(roc)
+    cls = keras.models.Model
+    cls.__getstate__ = __getstate__
+    cls.__setstate__ = __setstate__
 
-            with open('../files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
-                pickle.dump([prs, rocs], outfile)
-
-            plot_precision_recall(prs, OUTPUT_NAME)
-            plot_roc_curve(rocs, OUTPUT_NAME)
-    
 
 def getModel(input_shape,nclasses=2):
-
-    model = Sequential()
-    model.add(Dense(64, activation='relu', input_shape=input_shape))
-    model.add(Dropout(0.2))
-    model.add(Dense(nclasses, activation='softmax'))
+    make_keras_picklable()
+    
+    model = keras_sequential()
+    model.add(keras_dense(64, activation='relu', input_shape=input_shape))
+    model.add(keras_dropout(0.2))
+    model.add(keras_dense(nclasses, activation='softmax'))
 
     #model.summary()
     model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])#RMSprop()
 
     return model
 
+
 def learn_fc_model(X, Y, split):
     boolean_label = [(split[key]+1)/2 for key in Y]
-    y_train = np_utils.to_categorical(boolean_label, 2)
+    y_train = keras_np_utils.to_categorical(boolean_label, 2)
     model = getModel(input_shape=X[0].shape)
 
     model.fit(X, y_train, batch_size=40, nb_epoch=100, verbose=0)
@@ -85,7 +88,47 @@ def learn_fc_model(X, Y, split):
     return (model, split)
 
 
-def plshface(args, parallel_pool):
+def main():
+    PATH = str(args.path)
+    DATASET = str(args.file)
+    ITERATIONS = int(args.rept)
+    KNOWN_SET_SIZE = float(args.known_set_size)
+    NUM_HASH = int(args.hash)
+    OUTPUT_NAME = 'HFCN_' + str(args.file) + '_' + str(args.hash) + '_' + str(args.known_set_size) + '_' + str(args.rept)
+
+    prs = []
+    rocs = []
+    times = []
+    with Parallel(n_jobs=1, verbose=15, backend='multiprocessing') as parallel_pool:
+        for index in range(ITERATIONS):
+            keras_backend.clear_session()
+            keras_session = tensorflow.Session()
+            keras_backend.set_session(keras_session)
+
+            print('ITERATION #%s' % str(index+1))
+            start_time = time.time()
+            pr, roc = fcnhface(args, parallel_pool)
+            end_time = time.time()
+            
+            abs_time = (end_time - start_time)
+            prs.append(pr)
+            rocs.append(roc)
+            times.append(abs_time)
+
+            plot_precision_recall(prs, OUTPUT_NAME)
+            plot_roc_curve(rocs, OUTPUT_NAME)
+
+            with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
+                pickle.dump([prs, rocs], outfile)
+            with open('./times/' + OUTPUT_NAME + '.time', 'a') as outtime:
+                outtime.write(str(abs_time) + '\n')
+        with open('./times/' + OUTPUT_NAME + '.time', 'a') as outtime:
+            outtime.write('------\n')
+            outtime.write(str(np.mean(times)) + '\n')
+            outtime.write(str(np.std(times)) + '\n')
+
+
+def fcnhface(args, parallel_pool):
     PATH = str(args.path)
     DATASET = str(args.file)
     NUM_HASH = int(args.hash)
@@ -134,7 +177,11 @@ def plshface(args, parallel_pool):
     numpy_y = np.array(matrix_y)
     numpy_s = np.array(splits)
 
-    models = [learn_fc_model(numpy_x, numpy_y, split) for split in numpy_s]
+    # models = [learn_fc_model(numpy_x, numpy_y, split) for split in numpy_s]
+
+    models = parallel_pool(
+        delayed(learn_fc_model) (numpy_x, numpy_y, split) for split in numpy_s
+    )
 
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
@@ -145,7 +192,6 @@ def plshface(args, parallel_pool):
         feature_vector = np.array(list_of_features[sample_index])
 
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
-        #print (vote_dict)
         for k in range (0, len(models)):
             pos_list = [key for key, value in models[k][1].iteritems() if value == 1]
             pred = models[k][0].predict(feature_vector.reshape(1, feature_vector.shape[0]))

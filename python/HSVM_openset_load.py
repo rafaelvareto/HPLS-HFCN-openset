@@ -42,7 +42,7 @@ def main():
 
     prs = []
     rocs = []
-    with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
+    with Parallel(n_jobs=1, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
             pr, roc = svmhface(args, parallel_pool)
@@ -118,10 +118,9 @@ def svmhface(args, parallel_pool):
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
             pos_list = [key for key, value in model[1].iteritems() if value == 1]
-            response = model[0].predict([feature_vector])
-            # print(response)
+            response = model[0].predict(np.float32(feature_vector).reshape(1, -1))
             for pos in pos_list:
-                vote_dict[pos] += response
+                vote_dict[pos] += float(response[1])
         result = vote_dict.items()
         result.sort(key=lambda tup: tup[1], reverse=True)
 
@@ -137,11 +136,11 @@ def svmhface(args, parallel_pool):
             output = result[0][1] / denominator
         else:
             output = result[0][1]
-        print(counterB, sample_name, result[0][0], output[0])
+        print(counterB, sample_name, result[0][0], output)
 
         # Getting known set plotting relevant information
         plotting_labels.append([(sample_name, 1)])
-        plotting_scores.append([(sample_name, output[0])])
+        plotting_scores.append([(sample_name, output)])
 
     print('>> LOADING UNKNOWN PROBE: {0} samples'.format(len(unknown_tuples)))
     counterC = 0
@@ -154,9 +153,9 @@ def svmhface(args, parallel_pool):
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
             pos_list = [key for key, value in model[1].iteritems() if value == 1]
-            response = model[0].predict([feature_vector])
+            response = model[0].predict(np.float32(feature_vector).reshape(1, -1))
             for pos in pos_list:
-                vote_dict[pos] += response
+                vote_dict[pos] += float(response[1])
         result = vote_dict.items()
         result.sort(key=lambda tup: tup[1], reverse=True)
 
@@ -166,11 +165,11 @@ def svmhface(args, parallel_pool):
             output = result[0][1] / denominator
         else:
             output = result[0][1]
-        print(counterC, sample_name, result[0][0], output[0])
+        print(counterC, sample_name, result[0][0], output)
 
         # Getting unknown set plotting relevant information
         plotting_labels.append([(sample_name, -1)])
-        plotting_scores.append([(sample_name, output[0])])
+        plotting_scores.append([(sample_name, output)])
 
     # cmc_score_norm = np.divide(cmc_score, counterA)
     # generate_cmc_curve(cmc_score_norm, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)

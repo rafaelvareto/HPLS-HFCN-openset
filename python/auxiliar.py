@@ -113,10 +113,19 @@ def learn_plsh_model(matrix_x, matrix_y, split):
 
 
 def learn_svmh_model(matrix_x, matrix_y, split):
-    classifier = SVR(C=1.0,kernel='linear')
+    # classifier = SVR(C=1.0,kernel='linear')
+    # boolean_label = [split[key] for key in matrix_y]
+    # model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
+    # return (model, split)
+
     boolean_label = [split[key] for key in matrix_y]
-    model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
-    return (model, split)
+    classifier = cv.ml.SVM_create()
+    classifier.setKernel(cv.ml.SVM_LINEAR)
+    classifier.setType(cv.ml.SVM_C_SVC)
+    classifier.setC(1.0)
+    classifier.setGamma(4.5)
+    classifier.train(np.float32(matrix_x), cv.ml.ROW_SAMPLE, np.array(boolean_label))
+    return (classifier, split)
 
 
 def generate_probe_histogram(individuals, values, extra_name):
