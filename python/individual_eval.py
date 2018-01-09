@@ -1,21 +1,10 @@
 import argparse
-import cv2 as cv
-import itertools
-import matplotlib
 import numpy as np
 import pickle
 import random
 
-matplotlib.use('Agg')
-
-from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
-from auxiliar import generate_precision_recall, plot_precision_recall
-from auxiliar import generate_roc_curve, plot_roc_curve
-from auxiliar import learn_plsh_model
-from auxiliar import load_txt_file
 from joblib import Parallel, delayed
-from matplotlib import pyplot
 from pls_classifier import PLSClassifier
 
 
@@ -71,11 +60,21 @@ def split_train_test_sets(complete_tuple_list, train_set_size=0.5):
             else:
                 test_list.append((values[idx], key))
 
-    # print(train_list)
-    # raw_input()
-    # print(test_list)
-    # raw_input()
     return train_list, test_list
+
+
+def learn_plsh_model(matrix_x, matrix_y, split):
+    classifier = PLSClassifier()
+    boolean_label = [split[key] for key in matrix_y]
+    model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
+    return (model, split)
+
+
+def learn_svmh_model(matrix_x, matrix_y, split):
+    classifier = SVR(C=1.0,kernel='linear')
+    boolean_label = [split[key] for key in matrix_y]
+    model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
+    return (model, split)
 
 
 def plshface(args, parallel_pool):
@@ -110,12 +109,12 @@ def plshface(args, parallel_pool):
     for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))
 
-    print('>> LEARNING PLS MODELS:')
+    print('>> LEARNING PLS or SVM MODELS:')
     numpy_x = np.array(matrix_x)
     numpy_y = np.array(matrix_y)
     numpy_s = np.array(splits)
     models = parallel_pool(
-        delayed(learn_plsh_model) (numpy_x, numpy_y, split) for split in numpy_s
+        delayed(learn_plsh_model) (numpy_x, numpy_y, split) for split in numpy_s # Change here PLS/SVM
     )
 
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
@@ -131,7 +130,8 @@ def plshface(args, parallel_pool):
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
             pos_list = [key for key, value in model[1].iteritems() if value == 1]
-            response = model[0].predict_confidence(feature_vector)
+            response = model[0].predict_confidence(feature_vector) # PLS
+            # response = model[0].predict(np.float32(feature_vector).reshape(1, -1)) # SVM
             if sample_name in pos_list:
                 counter_fn_tp += 1
             if response > 0 and sample_name in pos_list:
