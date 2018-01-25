@@ -217,6 +217,15 @@ def compute_fscore(pr):
     return complete_zip[0]
 
 
+def mean_results(zipped_list):
+    threshs = [item[0] for item in zipped_list]
+    fscores = [item[1] for item in zipped_list]
+    precics = [item[2] for item in zipped_list]
+    recalls = [item[3] for item in zipped_list]
+    results = [('Thresh', np.mean(threshs), np.std(threshs)),('FSCore', np.mean(fscores), np.std(fscores)),('Precic', np.mean(precics), np.std(precics)),('Recall', np.mean(recalls), np.std(recalls))]
+    return results
+
+
 def generate_roc_curve(y_label_list, y_score_list):
     """
     ROC curves typically feature true positive rate on the Y axis, and false positive rate on the X axis. 

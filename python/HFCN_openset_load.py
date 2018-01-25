@@ -12,7 +12,7 @@ import time
 matplotlib.use('Agg')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-from auxiliar import compute_fscore
+from auxiliar import compute_fscore, mean_results
 from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
@@ -121,6 +121,13 @@ def main():
 
             plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
+    
+    means = mean_results(fscores)
+    with open('./values/' + OUTPUT_NAME + '.txt', 'a') as outvalue:
+        for item in fscores:
+            outvalue.write(str(item) + '\n')
+        for item in means:
+            outvalue.write(str(item) + '\n') 
     print(fscores)
 
 
