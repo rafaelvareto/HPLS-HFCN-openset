@@ -7,6 +7,7 @@ import pickle
 
 matplotlib.use('Agg')
 
+from auxiliar import compute_fscore
 from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
@@ -42,10 +43,12 @@ def main():
 
     prs = []
     rocs = []
+    fscores = []
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            pr, roc = plshface(args, parallel_pool)
+            pr, roc, fscore = plshface(args, parallel_pool)
+            fscores = fscore
             prs.append(pr)
             rocs.append(roc)
 
@@ -181,7 +184,11 @@ def plshface(args, parallel_pool):
     
     pr = generate_precision_recall(plotting_labels, plotting_scores)
     roc = generate_roc_curve(plotting_labels, plotting_scores)
-    return pr, roc
+    fscore = compute_fscore(pr)
+    for item in fscore:
+        print(item)
+    raw_input()
+    return pr, roc, fscore
 
 if __name__ == "__main__":
     main()
