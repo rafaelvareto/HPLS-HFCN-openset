@@ -47,24 +47,24 @@ with open(PATH + DATASET, 'rb') as input_file:
 
 
 def main():
+    fscores = []
     prs = []
     rocs = []
-    fscores = []
     with Parallel(n_jobs=1, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
             pr, roc, fscore = svmhface(args, parallel_pool)
-            fscores = fscore
+            fscores.append(fscore)
             prs.append(pr)
             rocs.append(roc)
-
-            print(fscores)
 
             with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
                 pickle.dump([prs, rocs], outfile)
 
             plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
+    
+    print(fscores)
     
 
 def svmhface(args, parallel_pool):
