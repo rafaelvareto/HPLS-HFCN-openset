@@ -206,11 +206,11 @@ def generate_precision_recall(y_label_list, y_score_list):
 
 def compute_fscore(pr):
     pr_zip = zip(pr['precision'], pr['recall'])
-    print(len(pr_zip))
     del pr_zip[-1]
-    print(len(pr_zip))
     fscores = [2 * (pre * rec) / (pre + rec) for (pre,rec) in pr_zip]
-    return zip(pr['thresh'], fscores)
+    f1_zip = zip(pr['thresh'], fscores)
+    f1_zip.sort(key=lambda tup: tup[1], reverse=True)
+    return f1_zip[0]
 
 
 def generate_roc_curve(y_label_list, y_score_list):

@@ -58,6 +58,8 @@ def main():
             prs.append(pr)
             rocs.append(roc)
 
+            print(fscores)
+
             with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
                 pickle.dump([prs, rocs], outfile)
 
@@ -91,7 +93,7 @@ def plshface(args, parallel_pool):
         matrix_y.append(sample_name)
 
         counterA += 1
-        print(counterA, sample_path, sample_name)
+        # print(counterA, sample_path, sample_name)
     
     print('>> SPLITTING POSITIVE/NEGATIVE SETS')
     individuals = list(set(matrix_y))
@@ -136,7 +138,7 @@ def plshface(args, parallel_pool):
             output = result[0][1] / denominator
         else:
             output = result[0][1]
-        print(counterB, sample_name, result[0][0], output)
+        # print(counterB, sample_name, result[0][0], output)
 
         # Getting known set plotting relevant information
         plotting_labels.append([(sample_name, 1)])
@@ -165,7 +167,7 @@ def plshface(args, parallel_pool):
             output = result[0][1] / denominator
         else:
             output = result[0][1]
-        print(counterC, sample_name, result[0][0], output)
+        # print(counterC, sample_name, result[0][0], output)
 
         # Getting unknown set plotting relevant information
         plotting_labels.append([(sample_name, -1)])
@@ -179,9 +181,6 @@ def plshface(args, parallel_pool):
     pr = generate_precision_recall(plotting_labels, plotting_scores)
     roc = generate_roc_curve(plotting_labels, plotting_scores)
     fscore = compute_fscore(pr)
-    for item in fscore:
-        print(item)
-    raw_input()
     return pr, roc, fscore
 
 if __name__ == "__main__":
