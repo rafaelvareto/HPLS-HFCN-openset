@@ -27,6 +27,22 @@ def load_txt_file(file_name):
     return this_list
 
 
+def set_maximum_samples(complete_tuple_list, number_of_samples):
+    # Establish dict with limited values
+    tuple_dict = dict()
+    for (path, label) in complete_tuple_list:
+        if label in tuple_dict and len(tuple_dict[label]) < number_of_samples:
+            tuple_dict[label].append(path)
+        elif label not in tuple_dict:
+            tuple_dict[label] = [path]
+    # Transform dict to list
+    tuple_list = list()
+    for key in tuple_dict.keys():
+        for value in tuple_dict[key]:
+            tuple_list.append((value, key))
+    return tuple_list
+
+
 def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
     label_set = set()
     for (path, label) in complete_tuple_list:
