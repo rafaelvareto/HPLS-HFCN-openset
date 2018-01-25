@@ -104,7 +104,6 @@ def main():
     fscores = []
     prs = []
     rocs = []
-    times = []
     with Parallel(n_jobs=1, verbose=15, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             keras_backend.clear_session()
@@ -112,27 +111,16 @@ def main():
             keras_backend.set_session(keras_session)
 
             print('ITERATION #%s' % str(index+1))
-            start_time = time.time()
             pr, roc, fscore = fcnhface(args, parallel_pool)
-            end_time = time.time()
-            abs_time = (end_time - start_time)
-            
             fscores.append(fscore)
             prs.append(pr)
             rocs.append(roc)
-            times.append(abs_time)
-
-            plot_precision_recall(prs, OUTPUT_NAME)
-            plot_roc_curve(rocs, OUTPUT_NAME)
 
             with open('./files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
                 pickle.dump([prs, rocs], outfile)
-            with open('./times/' + OUTPUT_NAME + '.time', 'a') as outtime:
-                outtime.write(str(abs_time) + '\n')
-        with open('./times/' + OUTPUT_NAME + '.time', 'a') as outtime:
-            outtime.write('------\n')
-            outtime.write(str(np.mean(times)) + '\n')
-            outtime.write(str(np.std(times)) + '\n')
+
+            plot_precision_recall(prs, OUTPUT_NAME)
+            plot_roc_curve(rocs, OUTPUT_NAME)
     print(fscores)
 
 
