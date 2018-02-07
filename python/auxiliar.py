@@ -58,21 +58,18 @@ def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
 
 
 def split_train_test_sets(complete_tuple_list, train_set_size=0.5):
-    from sklearn.model_selection import train_test_split
-    
-    labels = []
-    paths = []
-    for (path, label) in complete_tuple_list:
-        labels.append(label)
-        paths.append(path)
-    
-    random_gen = np.random.RandomState(0)
-    path_train, path_test, label_train, label_test = train_test_split(paths, labels, train_size=train_set_size, random_state=random_gen)
-
-    train_set = zip(path_train, label_train)
-    test_set = zip(path_test, label_test)
-
-    return train_set, test_set
+    label_set = {label for (path, label) in complete_tuple_list}
+    train_tuple = list()
+    test_tuple = list()
+    for label in label_set:
+        # Sample images to compose train_set
+        path_set = {path for (path, target) in complete_tuple_list if label == target}
+        train_set = set(random.sample(path_set, int(train_set_size * len(path_set))))
+        test_set = path_set - train_set
+        # Put together labels and paths
+        train_tuple.extend([(path, label) for path in train_set])
+        test_tuple.extend([(path, label) for path in test_set])
+    return train_tuple, test_tuple
 
 
 def load_images(path, image_list, display=False):
