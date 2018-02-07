@@ -104,9 +104,9 @@ In addition to OpenCV, the following Python libraries are required in order to e
 
 ### Datasets
 In order to reproduce the experiments, you need to either download the utilized datasets (FRGCv1, PubFig83 and VGGFace) and extract their corresponding feature vectors or download their disclosed feature files:
-* Face Recognition Grand Challenge [[exp1](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-1-DEEP.bin)] [[exp2](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-2-DEEP.bin)] [[exp4](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-4-DEEP.bin)]
-* Public Figures 83 [[dev](http://homepages.dcc.ufmg.br/~rafaelvareto/features/PUBFIG-DEV-DEEP.bin)] [[eval](http://homepages.dcc.ufmg.br/~rafaelvareto/features/PUBFIG-EVAL-DEEP.bin)]
-* VGGFace Dataset [[vgg](http://homepages.dcc.ufmg.br/~rafaelvareto/features/VGGFACE-15-DEEP.bin)] [[hog](http://homepages.dcc.ufmg.br/~rafaelvareto/features/VGGFACE-15-HOG.bin)]
+* Face Recognition Grand Challenge [[vgg-exp1](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-1-DEEP.bin)] [[vgg-exp2](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-2-DEEP.bin)] [[vgg-exp4](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-4-DEEP.bin)]
+* Public Figures 83 [[vgg](http://homepages.dcc.ufmg.br/%7Erafaelvareto/features/PUBFIG83-DEEP.bin)] 
+* VGGFace Dataset [[vgg-1000x15](http://homepages.dcc.ufmg.br/~rafaelvareto/features/VGGFACE-15-DEEP.bin)] [[hog-1000x15](http://homepages.dcc.ufmg.br/~rafaelvareto/features/VGGFACE-15-HOG.bin)]
 
 Note that the complete [VGGFace dataset](http://www.robots.ox.ac.uk/~vgg/data/vgg_face/) contains 2,622 identities. 
 In our experiments, we only utilize 1,000 subject identities holding 15 face samples each.
