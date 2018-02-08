@@ -84,110 +84,126 @@ def plshface(args, parallel_pool):
     dataset_dict = {value:index for index,value in enumerate(list_of_paths)}
     dataset_list = zip(list_of_paths, list_of_labels)
     dataset_list = set_maximum_samples(dataset_list, number_of_samples=SAMPLES)
+    # Split dataset into disjoint sets in terms of subjects and samples
     known_tuples, unknown_tuples = split_known_unknown_sets(dataset_list, known_set_size=KNOWN_SET_SIZE)
     known_train, known_test = split_train_test_sets(known_tuples, train_set_size=TRAIN_SET_SIZE)
+    to_discard, unknown_test = split_train_test_sets(unknown_tuples, train_set_size=TRAIN_SET_SIZE)
 
     print('>> LOADING GALLERY: {0} samples'.format(len(known_train)))
-    counterA = 0
-    for gallery_sample in known_train:
+    for counterA, gallery_sample in enumerate(known_train):
         sample_path = gallery_sample[0]
         sample_name = gallery_sample[1]
         sample_index = dataset_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
-    
+        # create list of feature vectors and their corresponding target values
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
-
-        counterA += 1
         # print(counterA, sample_path, sample_name)
     
     print('>> SPLITTING POSITIVE/NEGATIVE SETS')
     individuals = list(set(matrix_y))
-    cmc_score = np.zeros(len(individuals))
+    os_cmc_score = np.zeros(len(individuals))
+    oaa_cmc_score = np.zeros(len(individuals))
     for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))
 
-    print('>> LEARNING PLS MODELS:')
+    # Converting list to numpy arrays
     numpy_x = np.array(matrix_x)
     numpy_y = np.array(matrix_y)
     numpy_s = np.array(splits)
-    models = parallel_pool(
+
+    print('>> LEARNING OPEN-SET PLS MODELS:')
+    os_models = parallel_pool(
         delayed(learn_plsh_model) (numpy_x, numpy_y, split) for split in numpy_s
+    )
+    
+    print('>> LEARNING CLOSED-SET ONE-AGAINST-ALL PLS MODELS:')
+    oaa_splits = generate_oaa_splits(numpy_y)
+    oaa_models = parallel_pool(
+        delayed(learn_oaa_pls) (numpy_x, split) for split in oaa_splits
     )
   
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
-    counterB = 0
-    for probe_sample in known_test:
+    for counterB, probe_sample in enumerate(known_test):
+        # Obtaining probe feature vector and corresponding identity
         sample_path = probe_sample[0]
         sample_name = probe_sample[1]
         sample_index = dataset_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
-
+        
+        # Projecting feature vector to every os_model
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
-        for model in models:
+        for model in os_models:
             pos_list = [key for key, value in model[1].iteritems() if value == 1]
             response = model[0].predict_confidence(feature_vector)
             for pos in pos_list:
                 vote_dict[pos] += response
-        result = vote_dict.items()
-        result.sort(key=lambda tup: tup[1], reverse=True)
 
-        for outer in range(len(individuals)):
-            for inner in range(outer + 1):
-                if result[inner][0] == sample_name:
-                    cmc_score[outer] += 1
+        # Sort open-set vote-list histogram
+        vote_list = vote_dict.items()
+        vote_list.sort(key=lambda tup: tup[1], reverse=True)
+        denominator = np.absolute(np.mean([vote_list[1][1], vote_list[2][1]]))
+        vote_ratio = vote_list[0][1] / denominator if denominator > 0 else vote_list[0][1]
+        # Computer cmc score for open-set classification
+        for outer in range(0, len(individuals)):
+            for inner in range(0, outer + 1):
+                if vote_list[inner][0] == sample_name:
+                    os_cmc_score[outer] += 1
                     break
-        
-        counterB += 1
-        denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
-        if denominator > 0:
-            output = result[0][1] / denominator
-        else:
-            output = result[0][1]
-        # print(counterB, sample_name, result[0][0], output)
+
+        # Sort closed-set responses 
+        ooa_mls_responses = [model[0].predict_confidence(feature_vector) for model in oaa_models]
+        ooa_mls_labels = [model[1] for model in oaa_models]
+        responses = zip(ooa_mls_labels, ooa_mls_responses)
+        responses.sort(key=lambda tup: tup[1], reverse=True)
+        # Computer cmc score for closed-set classification
+        for outer in range(0, len(individuals)):
+            for inner in range(0, outer + 1):
+                if responses[inner][0] == sample_name:
+                    oaa_cmc_score[outer] += 1
+                    break
 
         # Getting known set plotting relevant information
         plotting_labels.append([(sample_name, 1)])
-        plotting_scores.append([(sample_name, output)])
+        plotting_scores.append([(sample_name, vote_ratio)])
+        print(counterB, sample_name, vote_ratio, vote_list[0][0], responses[0][0])
 
     print('>> LOADING UNKNOWN PROBE: {0} samples'.format(len(unknown_tuples)))
-    counterC = 0
-    for probe_sample in unknown_tuples:
+    for counterC, probe_sample in enumerate(unknown_test):
+        # Obtaining probe feature vector and corresponding identity
         sample_path = probe_sample[0]
         sample_name = probe_sample[1]
         sample_index = dataset_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
-
+        
+        # Projecting feature vector to every os_model
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
-        for model in models:
+        for model in os_models:
             pos_list = [key for key, value in model[1].iteritems() if value == 1]
             response = model[0].predict_confidence(feature_vector)
             for pos in pos_list:
                 vote_dict[pos] += response
+        
+        # Sort open-set vote-list histogram
         result = vote_dict.items()
         result.sort(key=lambda tup: tup[1], reverse=True)
-
-        counterC += 1
         denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
-        if denominator > 0:
-            output = result[0][1] / denominator
-        else:
-            output = result[0][1]
-        # print(counterC, sample_name, result[0][0], output)
+        vote_ratio = vote_list[0][1] / denominator if denominator > 0 else vote_list[0][1]
 
         # Getting unknown set plotting relevant information
         plotting_labels.append([(sample_name, -1)])
-        plotting_scores.append([(sample_name, output)])
+        plotting_scores.append([(sample_name, vote_ratio)])
+        # print(counterC, sample_name, result[0][0], vote_ratio)
 
-    # cmc_score_norm = np.divide(cmc_score, counterA)
-    # generate_cmc_curve(cmc_score_norm, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)
-
-    del models[:]
+    del os_models[:]
+    del oaa_models[:]
     
+    os_cmc = np.divide(os_cmc_score, len(known_test))
+    oaa_cmc = np.divide(oaa_cmc_score, len(known_test))
     pr = generate_precision_recall(plotting_labels, plotting_scores)
     roc = generate_roc_curve(plotting_labels, plotting_scores)
     fscore = compute_fscore(pr)
-    return pr, roc, fscore
+    return os_cmc, oaa_cmc, pr, roc, fscore
 
 if __name__ == "__main__":
     main()

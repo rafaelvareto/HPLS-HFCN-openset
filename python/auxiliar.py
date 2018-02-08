@@ -109,6 +109,17 @@ def generate_pos_neg_dict(labels):
     return full_dict
 
 
+def generate_oaa_splits(targets):
+    oaa_splits = list()
+    unique_labels = {target for target in targets}
+    for label in unique_labels:
+        indices = [idx for (idx,value) in enumerate(targets) if value == label]
+        binary_y = np.ones(len(targets)) * (-1)
+        binary_y[indices] = +1
+        oaa_splits.append((label, binary_y))
+    return oaa_splits
+
+
 def split_into_chunks(full_list, num_chunks):
     split_list = []
     chunk_size = int(len(full_list) / num_chunks) + 1
@@ -122,6 +133,13 @@ def learn_plsh_model(matrix_x, matrix_y, split):
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
     return (model, split)
+
+
+def learn_oaa_pls(matrix_x, split):
+    classifier = PLSClassifier()
+    label, boolean_labels = split
+    model = classifier.fit(np.array(matrix_x), np.array(boolean_labels))
+    return (model, label)
 
 
 def learn_svmh_model(matrix_x, matrix_y, split):
