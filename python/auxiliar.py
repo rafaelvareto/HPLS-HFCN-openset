@@ -44,16 +44,13 @@ def set_maximum_samples(complete_tuple_list, number_of_samples):
 
 
 def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
-    label_set = set()
-    for (path, label) in complete_tuple_list:
-        label_set.add(label)
-
+    label_set = {label for (path, label) in complete_tuple_list}
+    # Sample individuals to compose known_set
     known_set = set(random.sample(label_set, int(known_set_size * len(label_set))))
     unknown_set = label_set - known_set
-    
+    # Select remaining individuals to compose unknown_set
     known_tuple = [(path, label) for (path, label) in complete_tuple_list if label in known_set]
     unknown_tuple = [(path, label) for (path, label) in complete_tuple_list if label in unknown_set]
-    
     return known_tuple, unknown_tuple
 
 
@@ -167,28 +164,6 @@ def generate_probe_histogram(individuals, values, extra_name):
         plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0] + '_ERROR')
 
 
-def generate_cmc_curve(cmc_scores, extra_name):
-    """
-    The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
-    It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
-    Templates are compared and ranked based on their similarity.
-    """
-    # Plot Cumulative Matching Characteristic curve
-    plt.clf()
-    for cmc in cmc_scores:
-        x_axis = range(len(cmc))
-        y_axis = cmc
-        plt.plot(x_axis, y_axis, color='blue', linestyle='-')
-    
-    plt.xlim([0, len(cmc_scores)])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('Rank')
-    plt.ylabel('Accuracy Rate')
-    plt.title('Cumulative Matching Characteristic')
-    plt.savefig('plots/CMC_' + extra_name + '.png')
-    # plt.show()
-
-
 def generate_precision_recall(y_label_list, y_score_list):
     """
     A system with high recall but low precision returns many resaucsults, but most of its predicted labels are incorrect when compared to the training labels. 
@@ -227,8 +202,6 @@ def compute_fscore(pr):
     fscores = [2 * (pre * rec) / (pre + rec) for (pre,rec) in zip(precision, recall)]
     complete_zip = zip(pr['thresh'], fscores, pr['precision'], pr['recall'])
     complete_zip.sort(key=lambda tup: tup[1], reverse=True)
-    print(complete_zip[0])
-    print(complete_zip[-1])
     return complete_zip[0]
 
 
@@ -264,6 +237,37 @@ def generate_roc_curve(y_label_list, y_score_list):
     roc['fpr'], roc['tpr'], roc['thresh'] = roc_curve(label_array.ravel(), score_array.ravel())
     roc['auc']  = auc(roc['fpr'], roc['tpr'])
     return roc
+
+
+def plot_cmc_curve(os_scores, oaa_scores, extra_name=None):
+    """
+    The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
+    It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
+    Templates are compared and ranked based on their similarity.
+    """
+
+    # Compute mean values
+    os_mean = np.mean(os_scores, axis=0)
+    oaa_mean = np.mean(oaa_scores, axis=0)
+    x_axis = range(len(os_mean))
+    os_auc = auc(x_axis, os_mean)
+    ooa_auc = auc(x_axis, oaa_mean)
+    
+    # Plot Cumulative Matching Characteristic curve
+    plt.clf()
+    plt.plot(x_axis, os_mean, color='blue', linestyle='--', label='Open-set HPLS (%3f)' % (os_auc / len(os_scores[0])))
+    plt.plot(x_axis, oaa_mean, color='red', linestyle='-', label='Closed-set OAA-PLS (%3f)' % (ooa_auc / len(os_scores[0])))
+    plt.xlim([0, len(os_scores[0])])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('Rank')
+    plt.ylabel('Accuracy Rate')
+    plt.title('Cumulative Matching Characteristic')
+    plt.legend(loc="lower right")
+    plt.grid()
+    if extra_name == None:
+        plt.show()
+    else:
+        plt.savefig('./plots/CMC_' + extra_name + '.pdf')
 
 
 def plot_precision_recall(prs, extra_name=None):

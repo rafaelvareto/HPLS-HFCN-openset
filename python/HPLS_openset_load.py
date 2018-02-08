@@ -1,3 +1,4 @@
+# python default or third-party classes
 import argparse
 import cv2 as cv
 import itertools
@@ -7,19 +8,18 @@ import pickle
 
 matplotlib.use('Agg')
 
-from auxiliar import compute_fscore, mean_results
-from auxiliar import generate_cmc_curve
-from auxiliar import generate_pos_neg_dict
-from auxiliar import generate_precision_recall, plot_precision_recall
-from auxiliar import generate_roc_curve, plot_roc_curve
-from auxiliar import learn_plsh_model
-from auxiliar import load_txt_file, set_maximum_samples
-from auxiliar import split_known_unknown_sets, split_train_test_sets
 from joblib import Parallel, delayed
 from matplotlib import pyplot
-from pls_classifier import PLSClassifier
 
+# my classes or files
+from auxiliar import compute_fscore, mean_results
+from auxiliar import generate_pos_neg_dict, generate_oaa_splits
+from auxiliar import generate_precision_recall, generate_roc_curve, plot_cmc_curve, plot_precision_recall, plot_roc_curve
+from auxiliar import learn_plsh_model, learn_oaa_pls
+from auxiliar import load_txt_file, set_maximum_samples
+from auxiliar import split_known_unknown_sets, split_train_test_sets
 
+# Parsing parameteres
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-4-DEEP-FEATURE-VECTORS.bin')
@@ -30,6 +30,7 @@ parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled su
 parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
 args = parser.parse_args()
 
+# Keeping parameters in variables (DEFINES)
 PATH = str(args.path)
 DATASET = str(args.file)
 ITERATIONS = int(args.rept)
@@ -37,30 +38,33 @@ NUM_HASH = int(args.hash)
 SAMPLES = int(args.samples)
 KNOWN_SET_SIZE = float(args.known_set_size)
 TRAIN_SET_SIZE = float(args.train_set_size)
-
 DATASET = DATASET.replace('-FEATURE-VECTORS.bin','')
-OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(NUM_HASH)  + '_' + str(SAMPLES) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(NUM_HASH)  + '_' + str(SAMPLES) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(SAMPLES) + '_' + str(ITERATIONS)
 
 print('>> LOADING FEATURES FROM FILE')
 with open(PATH + DATASET, 'rb') as input_file:
     list_of_paths, list_of_labels, list_of_features = pickle.load(input_file)
 
-
 def main():
-    fscores = []
+    os_cmcs = []
+    oaa_cmcs = []
     prs = []
     rocs = []
+    fscores = []
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            pr, roc, fscore = plshface(args, parallel_pool)
-            fscores.append(fscore)
+            os_cmc, oaa_cmc, pr, roc, fscore = plshface(args, parallel_pool)
+            os_cmcs.append(os_cmc)
+            oaa_cmcs.append(oaa_cmc)
             prs.append(pr)
             rocs.append(roc)
+            fscores.append(fscore)
 
             with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
                 pickle.dump([prs, rocs], outfile)
 
+            plot_cmc_curve(os_cmcs, oaa_cmcs, OUTPUT_NAME)
             plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
     
