@@ -255,8 +255,8 @@ def plot_cmc_curve(os_scores, oaa_scores, extra_name=None):
     
     # Plot Cumulative Matching Characteristic curve
     plt.clf()
-    plt.plot(x_axis, os_mean, color='blue', linestyle='--', label='Open-set HPLS (%3f)' % (os_auc / len(os_scores[0])))
-    plt.plot(x_axis, oaa_mean, color='red', linestyle='-', label='Closed-set OAA-PLS (%3f)' % (ooa_auc / len(os_scores[0])))
+    plt.plot(x_axis, os_mean, color='blue', linestyle='--', label='Open-set HPLS (%0.3f)' % (os_auc / len(os_scores[0])))
+    plt.plot(x_axis, oaa_mean, color='red', linestyle='-', label='Closed-set OAA-PLS (%0.3f)' % (ooa_auc / len(os_scores[0])))
     plt.xlim([0, len(os_scores[0])])
     plt.ylim([0.0, 1.05])
     plt.xlabel('Rank')
