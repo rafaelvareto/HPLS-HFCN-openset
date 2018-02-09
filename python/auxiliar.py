@@ -11,6 +11,7 @@ from matplotlib import pyplot as plt
 from pls_classifier import PLSClassifier
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import detection_error_tradeoff
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
 from sklearn.svm import SVC
@@ -44,35 +45,29 @@ def set_maximum_samples(complete_tuple_list, number_of_samples):
 
 
 def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
-    label_set = set()
-    for (path, label) in complete_tuple_list:
-        label_set.add(label)
-
+    label_set = {label for (path, label) in complete_tuple_list}
+    # Sample individuals to compose known_set
     known_set = set(random.sample(label_set, int(known_set_size * len(label_set))))
     unknown_set = label_set - known_set
-    
+    # Select remaining individuals to compose unknown_set
     known_tuple = [(path, label) for (path, label) in complete_tuple_list if label in known_set]
     unknown_tuple = [(path, label) for (path, label) in complete_tuple_list if label in unknown_set]
-    
     return known_tuple, unknown_tuple
 
 
 def split_train_test_sets(complete_tuple_list, train_set_size=0.5):
-    from sklearn.model_selection import train_test_split
-    
-    labels = []
-    paths = []
-    for (path, label) in complete_tuple_list:
-        labels.append(label)
-        paths.append(path)
-    
-    random_gen = np.random.RandomState(0)
-    path_train, path_test, label_train, label_test = train_test_split(paths, labels, train_size=train_set_size, random_state=random_gen)
-
-    train_set = zip(path_train, label_train)
-    test_set = zip(path_test, label_test)
-
-    return train_set, test_set
+    label_set = {label for (path, label) in complete_tuple_list}
+    train_tuple = list()
+    test_tuple = list()
+    for label in label_set:
+        # Sample images to compose train_set
+        path_set = {path for (path, target) in complete_tuple_list if label == target}
+        train_set = set(random.sample(path_set, int(train_set_size * len(path_set))))
+        test_set = path_set - train_set
+        # Put together labels and paths
+        train_tuple.extend([(path, label) for path in train_set])
+        test_tuple.extend([(path, label) for path in test_set])
+    return train_tuple, test_tuple
 
 
 def load_images(path, image_list, display=False):
@@ -112,6 +107,17 @@ def generate_pos_neg_dict(labels):
     return full_dict
 
 
+def generate_oaa_splits(targets):
+    oaa_splits = list()
+    unique_labels = {target for target in targets}
+    for label in unique_labels:
+        indices = [idx for (idx,value) in enumerate(targets) if value == label]
+        binary_y = np.ones(len(targets)) * (-1)
+        binary_y[indices] = +1
+        oaa_splits.append((label, binary_y))
+    return oaa_splits
+
+
 def split_into_chunks(full_list, num_chunks):
     split_list = []
     chunk_size = int(len(full_list) / num_chunks) + 1
@@ -125,6 +131,13 @@ def learn_plsh_model(matrix_x, matrix_y, split):
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
     return (model, split)
+
+
+def learn_oaa_pls(matrix_x, split):
+    classifier = PLSClassifier()
+    label, boolean_labels = split
+    model = classifier.fit(np.array(matrix_x), np.array(boolean_labels))
+    return (model, label)
 
 
 def learn_svmh_model(matrix_x, matrix_y, split):
@@ -143,6 +156,31 @@ def learn_svmh_model(matrix_x, matrix_y, split):
     return (classifier, split)
 
 
+def generate_det_curve(y_label_list, y_score_list):
+    """
+    DET curves typically feature missed detection rate on the Y axis, and false positive rate on the X axis. 
+    This means that the bottom left corner of the plot is the ideal point - a false positive rate of zero, and a missed detection rate of zero as well. 
+    This is not very realistic, but it does mean that a smaller area under the curve (AUC) is usually better.
+    """
+    # Prepare input data
+    label_list = []
+    score_list = []
+    for line in y_label_list:
+        temp_list = [item[1] for item in line]
+        label_list.append(temp_list)
+    for line in y_score_list:
+        temp_list = [item[1] for item in line]
+        score_list.append(temp_list)
+    label_array = np.array(label_list)
+    score_array = np.array(score_list)
+
+    # Compute micro-average DET curve and DET area
+    det = dict()
+    det['fpr'], det['fnr'], det['thresh'] = detection_error_tradeoff(label_array.ravel(), score_array.ravel())
+    det['auc']  = auc(det['fpr'], det['fnr'])
+    return det
+
+
 def generate_probe_histogram(individuals, values, extra_name):
     plt.clf()
     plt.bar(range(len(individuals)), values)
@@ -150,28 +188,6 @@ def generate_probe_histogram(individuals, values, extra_name):
         plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0])
     else:
         plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0] + '_ERROR')
-
-
-def generate_cmc_curve(cmc_scores, extra_name):
-    """
-    The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
-    It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
-    Templates are compared and ranked based on their similarity.
-    """
-    # Plot Cumulative Matching Characteristic curve
-    plt.clf()
-    for cmc in cmc_scores:
-        x_axis = range(len(cmc))
-        y_axis = cmc
-        plt.plot(x_axis, y_axis, color='blue', linestyle='-')
-    
-    plt.xlim([0, len(cmc_scores)])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('Rank')
-    plt.ylabel('Accuracy Rate')
-    plt.title('Cumulative Matching Characteristic')
-    plt.savefig('plots/CMC_' + extra_name + '.png')
-    # plt.show()
 
 
 def generate_precision_recall(y_label_list, y_score_list):
@@ -212,9 +228,16 @@ def compute_fscore(pr):
     fscores = [2 * (pre * rec) / (pre + rec) for (pre,rec) in zip(precision, recall)]
     complete_zip = zip(pr['thresh'], fscores, pr['precision'], pr['recall'])
     complete_zip.sort(key=lambda tup: tup[1], reverse=True)
-    print(complete_zip[0])
-    print(complete_zip[-1])
     return complete_zip[0]
+
+
+def mean_results(zipped_list):
+    threshs = [item[0] for item in zipped_list]
+    fscores = [item[1] for item in zipped_list]
+    precics = [item[2] for item in zipped_list]
+    recalls = [item[3] for item in zipped_list]
+    results = [('Thresh', np.mean(threshs), np.std(threshs)),('FSCore', np.mean(fscores), np.std(fscores)),('Precic', np.mean(precics), np.std(precics)),('Recall', np.mean(recalls), np.std(recalls))]
+    return results
 
 
 def generate_roc_curve(y_label_list, y_score_list):
@@ -240,6 +263,67 @@ def generate_roc_curve(y_label_list, y_score_list):
     roc['fpr'], roc['tpr'], roc['thresh'] = roc_curve(label_array.ravel(), score_array.ravel())
     roc['auc']  = auc(roc['fpr'], roc['tpr'])
     return roc
+
+
+def plot_cmc_curve(os_scores, oaa_scores, extra_name=None):
+    """
+    The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
+    It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
+    Templates are compared and ranked based on their similarity.
+    """
+
+    # Compute mean values
+    os_mean = np.mean(os_scores, axis=0)
+    oaa_mean = np.mean(oaa_scores, axis=0)
+    x_axis = range(len(os_mean))
+    os_auc = auc(x_axis, os_mean)
+    ooa_auc = auc(x_axis, oaa_mean)
+    
+    # Plot Cumulative Matching Characteristic curve
+    plt.clf()
+    plt.plot(x_axis, os_mean, color='blue', linestyle='--', label='Open-set HPLS (%0.3f)' % (os_auc / len(os_scores[0])))
+    plt.plot(x_axis, oaa_mean, color='red', linestyle='-', label='Closed-set OAA-PLS (%0.3f)' % (ooa_auc / len(os_scores[0])))
+    plt.xlim([0, len(os_scores[0])])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('Rank')
+    plt.ylabel('Accuracy Rate')
+    plt.title('Cumulative Matching Characteristic')
+    plt.legend(loc="lower right")
+    plt.grid()
+    if extra_name == None:
+        plt.show()
+    else:
+        plt.savefig('./plots/CMC_' + extra_name + '.pdf')
+
+
+def plot_det_curve(dets, extra_name=None):
+    # Setup plot details
+    color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
+    color_names = [name for name, color in color_dict.items()]
+    colors = cycle(color_names)
+    lw = 2
+
+    # Plot Receiver Operating Characteristic curve
+    plt.clf()
+    aucs = []
+    for index, color in zip(range(len(dets)), colors):
+        det = dets[index]
+        plt.plot(det['fpr'], det['fnr'], color=color, lw=lw, label='DET curve %d (area = %0.3f)' % (index+1, det['auc']))
+        aucs.append(det['auc'])
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('False Negative Rate')
+    plt.xscale('linear') # linear, log, logit, symlog 
+    plt.yscale('linear')
+    plt.title('Detection Error Trade-off')
+    plt.legend(loc="upper right")
+    plt.grid()
+    if extra_name == None:
+        plt.show()
+    else:
+        plt.savefig('./plots/DET_' + extra_name + '.pdf')
 
 
 def plot_precision_recall(prs, extra_name=None):

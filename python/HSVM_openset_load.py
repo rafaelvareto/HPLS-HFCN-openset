@@ -7,7 +7,7 @@ import pickle
 
 matplotlib.use('Agg')
 
-from auxiliar import compute_fscore
+from auxiliar import compute_fscore, mean_results
 from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
@@ -39,7 +39,7 @@ KNOWN_SET_SIZE = float(args.known_set_size)
 TRAIN_SET_SIZE = float(args.train_set_size)
 
 DATASET = DATASET.replace('-FEATURE-VECTORS.bin','')
-OUTPUT_NAME = 'HSVM_' + DATASET + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+OUTPUT_NAME = 'HSVM' + DATASET + '_' + str(NUM_HASH)  + '_' + str(SAMPLES) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
 print('>> LOADING FEATURES FROM FILE')
 with open(PATH + DATASET, 'rb') as input_file:
@@ -64,6 +64,12 @@ def main():
             plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
     
+    means = mean_results(fscores)
+    with open('./values/' + OUTPUT_NAME + '.txt', 'a') as outvalue:
+        for item in fscores:
+            outvalue.write(str(item) + '\n')
+        for item in means:
+            outvalue.write(str(item) + '\n') 
     print(fscores)
     
 
