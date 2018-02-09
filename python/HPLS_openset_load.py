@@ -149,7 +149,7 @@ def plshface(args, parallel_pool):
         # Sort open-set vote-list histogram
         vote_list = vote_dict.items()
         vote_list.sort(key=lambda tup: tup[1], reverse=True)
-        denominator = np.absolute(np.mean([vote_list[1][1], vote_list[2][1]]))
+        denominator = np.absolute(np.mean([vote_list[1][1], vote_list[2][1], vote_list[3][1]]))
         vote_ratio = vote_list[0][1] / denominator if denominator > 0 else vote_list[0][1]
         # Computer cmc score for open-set classification
         for outer in range(0, len(individuals)):
@@ -171,9 +171,9 @@ def plshface(args, parallel_pool):
                     break
 
         # Getting known set plotting relevant information
-        plotting_labels.append([(sample_name, 1)])
+        plotting_labels.append([(sample_name, 1.0)])
         plotting_scores.append([(sample_name, vote_ratio)])
-        print(counterB, sample_name, vote_ratio, vote_list[0][0], responses[0][0])
+        # print(counterB, sample_name, vote_ratio, vote_list[0][0], responses[0][0])
 
     print('>> LOADING UNKNOWN PROBE: {0} samples'.format(len(unknown_tuples)))
     for counterC, probe_sample in enumerate(unknown_test):
@@ -192,15 +192,15 @@ def plshface(args, parallel_pool):
                 vote_dict[pos] += response
         
         # Sort open-set vote-list histogram
-        result = vote_dict.items()
-        result.sort(key=lambda tup: tup[1], reverse=True)
-        denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
+        vote_list = vote_dict.items()
+        vote_list.sort(key=lambda tup: tup[1], reverse=True)
+        denominator = np.absolute(np.mean([vote_list[1][1], vote_list[2][1], vote_list[3][1]]))
         vote_ratio = vote_list[0][1] / denominator if denominator > 0 else vote_list[0][1]
 
         # Getting unknown set plotting relevant information
-        plotting_labels.append([(sample_name, -1)])
+        plotting_labels.append([(sample_name, -1.0)])
         plotting_scores.append([(sample_name, vote_ratio)])
-        # print(counterC, sample_name, result[0][0], vote_ratio)
+        # print(counterC, sample_name, vote_ratio, vote_list[0][0])
 
     del os_models[:]
     del oaa_models[:]

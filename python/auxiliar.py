@@ -315,8 +315,9 @@ def plot_det_curve(dets, extra_name=None):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('False Negative Rate')
-    # plt.ylabel('Missed Detection Rate')
-    plt.title('Detection Error Trade-off (%0.3f - %0.3f)' % (np.mean(aucs),np.std(aucs)))
+    plt.xscale('linear') # linear, log, logit, symlog 
+    plt.yscale('linear')
+    plt.title('Detection Error Trade-off')
     plt.legend(loc="upper right")
     plt.grid()
     if extra_name == None:
