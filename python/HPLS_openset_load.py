@@ -14,7 +14,7 @@ from matplotlib import pyplot
 # my classes or files
 from auxiliar import compute_fscore, mean_results
 from auxiliar import generate_pos_neg_dict, generate_oaa_splits
-from auxiliar import generate_precision_recall, generate_roc_curve, plot_cmc_curve, plot_precision_recall, plot_roc_curve
+from auxiliar import generate_det_curve, generate_precision_recall, generate_roc_curve, plot_cmc_curve, plot_det_curve, plot_precision_recall, plot_roc_curve
 from auxiliar import learn_plsh_model, learn_oaa_pls
 from auxiliar import load_txt_file, set_maximum_samples
 from auxiliar import split_known_unknown_sets, split_train_test_sets
@@ -48,15 +48,17 @@ with open(PATH + DATASET, 'rb') as input_file:
 def main():
     os_cmcs = []
     oaa_cmcs = []
+    dets = []
     prs = []
     rocs = []
     fscores = []
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            os_cmc, oaa_cmc, pr, roc, fscore = plshface(args, parallel_pool)
+            os_cmc, oaa_cmc, det, pr, roc, fscore = plshface(args, parallel_pool)
             os_cmcs.append(os_cmc)
             oaa_cmcs.append(oaa_cmc)
+            dets.append(det)
             prs.append(pr)
             rocs.append(roc)
             fscores.append(fscore)
@@ -65,6 +67,7 @@ def main():
                 pickle.dump([prs, rocs], outfile)
 
             plot_cmc_curve(os_cmcs, oaa_cmcs, OUTPUT_NAME)
+            plot_det_curve(dets, OUTPUT_NAME)
             plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
     
@@ -204,10 +207,11 @@ def plshface(args, parallel_pool):
     
     os_cmc = np.divide(os_cmc_score, len(known_test))
     oaa_cmc = np.divide(oaa_cmc_score, len(known_test))
+    det = generate_det_curve(plotting_labels, plotting_scores)
     pr = generate_precision_recall(plotting_labels, plotting_scores)
     roc = generate_roc_curve(plotting_labels, plotting_scores)
     fscore = compute_fscore(pr)
-    return os_cmc, oaa_cmc, pr, roc, fscore
+    return os_cmc, oaa_cmc, det, pr, roc, fscore
 
 if __name__ == "__main__":
     main()

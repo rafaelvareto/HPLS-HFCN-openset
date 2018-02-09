@@ -11,6 +11,7 @@ from matplotlib import pyplot as plt
 from pls_classifier import PLSClassifier
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import detection_error_tradeoff
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
 from sklearn.svm import SVC
@@ -155,6 +156,31 @@ def learn_svmh_model(matrix_x, matrix_y, split):
     return (classifier, split)
 
 
+def generate_det_curve(y_label_list, y_score_list):
+    """
+    DET curves typically feature missed detection rate on the Y axis, and false positive rate on the X axis. 
+    This means that the bottom left corner of the plot is the ideal point - a false positive rate of zero, and a missed detection rate of zero as well. 
+    This is not very realistic, but it does mean that a smaller area under the curve (AUC) is usually better.
+    """
+    # Prepare input data
+    label_list = []
+    score_list = []
+    for line in y_label_list:
+        temp_list = [item[1] for item in line]
+        label_list.append(temp_list)
+    for line in y_score_list:
+        temp_list = [item[1] for item in line]
+        score_list.append(temp_list)
+    label_array = np.array(label_list)
+    score_array = np.array(score_list)
+
+    # Compute micro-average DET curve and DET area
+    det = dict()
+    det['fpr'], det['fnr'], det['thresh'] = detection_error_tradeoff(label_array.ravel(), score_array.ravel())
+    det['auc']  = auc(det['fpr'], det['fnr'])
+    return det
+
+
 def generate_probe_histogram(individuals, values, extra_name):
     plt.clf()
     plt.bar(range(len(individuals)), values)
@@ -268,6 +294,35 @@ def plot_cmc_curve(os_scores, oaa_scores, extra_name=None):
         plt.show()
     else:
         plt.savefig('./plots/CMC_' + extra_name + '.pdf')
+
+
+def plot_det_curve(dets, extra_name=None):
+    # Setup plot details
+    color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
+    color_names = [name for name, color in color_dict.items()]
+    colors = cycle(color_names)
+    lw = 2
+
+    # Plot Receiver Operating Characteristic curve
+    plt.clf()
+    aucs = []
+    for index, color in zip(range(len(dets)), colors):
+        det = dets[index]
+        plt.plot(det['fpr'], det['fnr'], color=color, lw=lw, label='DET curve %d (area = %0.3f)' % (index+1, det['auc']))
+        aucs.append(det['auc'])
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('False Negative Rate')
+    # plt.ylabel('Missed Detection Rate')
+    plt.title('Detection Error Trade-off (%0.3f - %0.3f)' % (np.mean(aucs),np.std(aucs)))
+    plt.legend(loc="upper right")
+    plt.grid()
+    if extra_name == None:
+        plt.show()
+    else:
+        plt.savefig('./plots/DET_' + extra_name + '.pdf')
 
 
 def plot_precision_recall(prs, extra_name=None):
