@@ -39,7 +39,7 @@ SAMPLES = int(args.samples)
 KNOWN_SET_SIZE = float(args.known_set_size)
 TRAIN_SET_SIZE = float(args.train_set_size)
 DATASET = DATASET.replace('-FEATURE-VECTORS.bin','')
-OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(NUM_HASH)  + '_' + str(SAMPLES) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(SAMPLES) + '_' + str(ITERATIONS)
+OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(NUM_HASH)  + '_' + str(SAMPLES) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
 print('>> LOADING FEATURES FROM FILE')
 with open(PATH + DATASET, 'rb') as input_file:
