@@ -21,13 +21,13 @@ from auxiliar import split_known_unknown_sets, split_train_test_sets
 
 # Parsing parameteres
 parser = argparse.ArgumentParser(description='PLSH for Face Recognition with NO Feature Extraction')
-parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
-parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-4-DEEP-FEATURE-VECTORS.bin')
+parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='../features/')
+parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='SSIG-DEEP.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
-parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=10)
+parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=50)
 parser.add_argument('-s', '--samples', help='Number of samples per subject', required=False, default=30, type=int)
-parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)
-parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
+parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.8)
+parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.8)
 args = parser.parse_args()
 
 # Keeping parameters in variables (DEFINES)
