@@ -9,11 +9,11 @@ from itertools import cycle
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
 from pls_classifier import PLSClassifier
-from sklearn.metrics import auc
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import detection_error_tradeoff
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import roc_curve
+from metrics import auc
+from metrics import average_precision_score
+from metrics import detection_error_tradeoff
+from metrics import precision_recall_curve
+from metrics import roc_curve
 from sklearn.svm import SVC
 from sklearn.svm import SVR
 
